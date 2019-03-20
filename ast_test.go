@@ -3,6 +3,7 @@ package sqlfmt
 import (
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -28,17 +29,23 @@ func TestNewSQLFormatter(t *testing.T) {
 	})
 }
 
-func TestFormatInAst(t *testing.T) {
-	f, err := os.Open("./testdata/testing_gofile.go")
-	if err != nil {
-		t.Fatalf("ERROR: %#v", err)
-	}
+var testFiles, _ = filepath.Glob("./testdata/*.go")
 
-	sfmt, err := NewSQLFormatter(f)
-	if err != nil {
-		t.Fatalf("ERROR %#v", err)
-	}
-	if err := sfmt.Format(); err != nil {
-		t.Errorf("ERROR:%#v", err)
+func TestFormatInAst(t *testing.T) {
+	for _, file := range testFiles {
+		t.Run(file, func(t *testing.T) {
+			f, err := os.Open(file)
+			if err != nil {
+				t.Fatalf("ERROR: %#v", err)
+			}
+
+			sfmt, err := NewSQLFormatter(f)
+			if err != nil {
+				t.Fatalf("ERROR %#v", err)
+			}
+			if err := sfmt.Format(); err != nil {
+				t.Errorf("ERROR:%#v", err)
+			}
+		})
 	}
 }

@@ -60,20 +60,22 @@ func (s *SQLFormatter) Format() error {
 			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
 				funcName := fun.Sel.Name
 				if funcName == QUERY || funcName == QUERYROW || funcName == EXEC {
-					if arg, ok := x.Args[0].(*ast.BasicLit); ok {
-						sqlStmt := arg.Value
-						if !strings.HasPrefix(sqlStmt, "`") {
-							return true
-						}
-						src := strings.Trim(sqlStmt, "`")
-						formattedStmt, e := s.Formatter.Format(src)
-						if e != nil {
-							err = &FormatError{
-								Msg: e.Error(),
+					if len(x.Args) > 0 {
+						if arg, ok := x.Args[0].(*ast.BasicLit); ok {
+							sqlStmt := arg.Value
+							if !strings.HasPrefix(sqlStmt, "`") {
+								return true
 							}
-							return false
+							src := strings.Trim(sqlStmt, "`")
+							formattedStmt, e := s.Formatter.Format(src)
+							if e != nil {
+								err = &FormatError{
+									Msg: e.Error(),
+								}
+								return false
+							}
+							arg.Value = "`" + formattedStmt + "`"
 						}
-						arg.Value = "`" + formattedStmt + "`"
 					}
 				}
 			}
