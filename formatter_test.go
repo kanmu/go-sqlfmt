@@ -36,7 +36,7 @@ func TestFormat(t *testing.T) {
 				t.Errorf("should be nil, got %v", err)
 			}
 			if tt.want != got {
-				t.Errorf("want %#v, got %#v", tt.want, got)
+				t.Errorf("\nwant %#v, \ngot %#v", tt.want, got)
 			}
 		})
 	}
@@ -838,7 +838,7 @@ SELECT
 	{
 		src: `select
 	    foo,
-	    row_number() over (range unbounded preceding)
+	    row_number() over(range unbounded preceding)
 	  from
 	    baz
 	  `,

@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/kanmu/go-sqlfmt"
+	sqlfmt "github.com/kanmu/go-sqlfmt"
 )
 
 var (

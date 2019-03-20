@@ -293,25 +293,39 @@ func (t *Tokenizer) scanIdent() error {
 			t.w.WriteRune(ch)
 		}
 	}
-
 	t.append(t.w.String())
 	return nil
 }
 
 func (t *Tokenizer) append(v string) {
 	upperValue := strings.ToUpper(v)
-	if ttype, ok := sqlKeywordMap[upperValue]; ok {
+
+	if ttype, ok := t.isSQLKeyWord(upperValue); ok {
 		t.result = append(t.result, Token{
 			Type:  ttype,
 			Value: upperValue,
 		})
 	} else {
 		t.result = append(t.result, Token{
-			Type:  IDENT,
+			Type:  ttype,
 			Value: v,
 		})
 	}
 	t.w.Reset()
+}
+
+func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
+	if ttype, ok := sqlKeywordMap[v]; ok {
+		return ttype, ok
+	} else if ttype, ok := typeWithParenMap[v]; ok {
+		if r, _, err := t.r.ReadRune(); err == nil && string(r) == StartParenthesis {
+			t.unread()
+			return ttype, ok
+		}
+		t.unread()
+		return IDENT, ok
+	}
+	return IDENT, false
 }
 
 var sqlKeywordMap = map[string]TokenType{
@@ -376,7 +390,9 @@ var sqlKeywordMap = map[string]TokenType{
 	"NULLS":       NULLS,
 	"LAST":        LAST,
 	"AT":          AT,
+}
 
+var typeWithParenMap = map[string]TokenType{
 	"SUM":             FUNCTION,
 	"AVG":             FUNCTION,
 	"MAX":             FUNCTION,
@@ -401,23 +417,22 @@ var sqlKeywordMap = map[string]TokenType{
 	"LEAST":           FUNCTION,
 	"OVER":            FUNCTION,
 	"ROW_NUMBER":      FUNCTION,
-
-	"BIG":        TYPE,
-	"BIGSERIAL":  TYPE,
-	"BOOLEAN":    TYPE,
-	"CHAR":       TYPE,
-	"BIT":        TYPE,
-	"TEXT":       TYPE,
-	"INTEGER":    TYPE,
-	"NUMERIC":    TYPE,
-	"DECIMAL":    TYPE,
-	"DEC":        TYPE,
-	"FLOAT":      TYPE,
-	"CUSTOMTYPE": TYPE,
-	"VARCHAR":    TYPE,
-	"VARBIT":     TYPE,
-	"TIMESTAMP":  TYPE,
-	"TIME":       TYPE,
-	"SECOND":     TYPE,
-	"INTERVAL":   TYPE,
+	"BIG":             TYPE,
+	"BIGSERIAL":       TYPE,
+	"BOOLEAN":         TYPE,
+	"CHAR":            TYPE,
+	"BIT":             TYPE,
+	"TEXT":            TYPE,
+	"INTEGER":         TYPE,
+	"NUMERIC":         TYPE,
+	"DECIMAL":         TYPE,
+	"DEC":             TYPE,
+	"FLOAT":           TYPE,
+	"CUSTOMTYPE":      TYPE,
+	"VARCHAR":         TYPE,
+	"VARBIT":          TYPE,
+	"TIMESTAMP":       TYPE,
+	"TIME":            TYPE,
+	"SECOND":          TYPE,
+	"INTERVAL":        TYPE,
 }
