@@ -86,7 +86,7 @@ ORDER BY
 ## Installation
 
 ```bash
-$ go get github.com/kanmu/go-sqlfmt/cmd/go-sqlfmt
+$ go get github.com/kanmu/go-sqlfmt/cmd/sqlfmt
 ```
 
 ## Usage
