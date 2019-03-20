@@ -1,5 +1,7 @@
 # sqlfmt
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/kanmu/go-sqlfmt)](https://goreportcard.com/report/github.com/kanmu/go-sqlfmt)
+
 ## Demo
 
 ![](https://raw.githubusercontent.com/kanmu/go-sqlfmt/master/gif/sql.gif?token=Al37VrrHKRlhQ_uOpxI30oKUX5OLNhlqks5cmu5AwA%3D%3D)
