@@ -2,7 +2,7 @@
 
 ## Demo
 
-![](https://raw.githubusercontent.com/kanmu/go-sqlfmt/master/gif/sql.gif?token=Al37VgokZzrfqyJPqqrXlo4g5byH7qSAks5cmt7WwA%3D%3D)
+![](https://raw.githubusercontent.com/kanmu/go-sqlfmt/master/gif/sql.gif?token=Al37VrrHKRlhQ_uOpxI30oKUX5OLNhlqks5cmu5AwA%3D%3D)
 
 ## Description
 
