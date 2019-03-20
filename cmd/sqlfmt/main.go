@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"go/printer"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/kanmu/go-sqlfmt"
 )
@@ -40,15 +42,34 @@ func main() {
 		log.Println(err)
 	}
 
+	cfg := printer.Config{Mode: printerMode, Tabwidth: tabWidth}
 	if *outputFile == "" {
-		cfg := printer.Config{Mode: printerMode, Tabwidth: tabWidth}
 		cfg.Fprint(os.Stdout, sfmt.Fset, sfmt.AstNode)
 	} else {
-		dst, err := os.Create(*outputFile)
-		if err != nil {
+		if err = writeFile(*outputFile, cfg, sfmt); err != nil {
 			log.Fatal(err)
 		}
-		cfg := printer.Config{Mode: printerMode, Tabwidth: tabWidth}
-		cfg.Fprint(dst, sfmt.Fset, sfmt.AstNode)
 	}
+}
+
+// atomic write
+func writeFile(filename string, cfg printer.Config, sfmt *sqlfmt.SQLFormatter) error {
+	tmpFile, err := filepath.Abs(filename + ".")
+	if err != nil {
+		return err
+	}
+	f, err := ioutil.TempFile(filepath.Dir(tmpFile), filepath.Base(tmpFile))
+	if err != nil {
+		return err
+	}
+	if err := cfg.Fprint(f, sfmt.Fset, sfmt.AstNode); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err = os.Rename(f.Name(), filename); err != nil {
+		return err
+	}
+	return nil
 }
