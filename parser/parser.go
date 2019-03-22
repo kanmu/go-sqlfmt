@@ -30,6 +30,8 @@ func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
 		return p.parseDeleteStmt(tokens)
 	case lexer.INSERT:
 		return p.parseInsertStmt(tokens)
+	case lexer.LOCK:
+		return p.parseLockStmt(tokens)
 	}
 	return nil, errors.New("no sql statement can not be parsed")
 }
@@ -115,6 +117,21 @@ func (p *parser) parseInsertStmt(tokens []lexer.Token) ([]group.Reindenter, erro
 		f(tokens)
 		if p.err != nil {
 			return nil, errors.Wrap(p.err, "parse Insert Stmt failed ")
+		}
+	}
+	return p.result, nil
+}
+
+// ParseLockStmt parses tokens of Lock stmt until EOF appears
+// it calls each Retrieve function, appending clause group to result
+func (p *parser) parseLockStmt(tokens []lexer.Token) ([]group.Reindenter, error) {
+	funcs := []func([]lexer.Token){
+		p.retrieveLockGroup,
+	}
+	for _, f := range funcs {
+		f(tokens)
+		if p.err != nil {
+			return nil, errors.Wrap(p.err, "parse Lock Stmt failed ")
 		}
 	}
 	return p.result, nil
@@ -480,4 +497,20 @@ func (p *parser) retrieveDeleteGroup(tokens []lexer.Token) {
 
 	p.offset += endIdx
 	p.result = append(p.result, &group.Delete{Element: deleteElements})
+}
+
+func (p *parser) retrieveLockGroup(tokens []lexer.Token) {
+	if tokens[p.offset].Type != lexer.LOCK {
+		return
+	}
+
+	r := NewRetriever(tokens[p.offset:])
+	lockElements, endIdx, e := r.Retrieve()
+	if e != nil {
+		p.err = e
+		return
+	}
+
+	p.offset += endIdx
+	p.result = append(p.result, &group.Lock{Element: lockElements})
 }

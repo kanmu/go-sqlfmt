@@ -85,6 +85,7 @@ const (
 	NULLS
 	LAST
 	AT
+	LOCK
 
 	QUOTEAREA
 	SURROUNDING
@@ -128,6 +129,7 @@ var (
 	EndOfValues      = []TokenType{UPDATE, RETURNING, EOF}
 	EndOfFunction    = []TokenType{ENDPARENTHESIS}
 	EndOfTypeCast    = []TokenType{ENDPARENTHESIS}
+	EndOfLock        = []TokenType{EOF}
 )
 
 // token types that contain the keyword to make subGroup
