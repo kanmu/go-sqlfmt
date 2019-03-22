@@ -7,12 +7,14 @@ import (
 )
 
 func TestGetTokens(t *testing.T) {
-	var testingSQLStatement = strings.Trim(`select name, age, sum(case xxx) from user where name xxx and age = 'xxx' limit 100 except 100`, "`")
+	var testingSQLStatement = strings.Trim(`select name, age,sum, sum(case xxx) from user where name xxx and age = 'xxx' limit 100 except 100`, "`")
 	want := []Token{
 		Token{Type: SELECT, Value: "SELECT"},
 		Token{Type: IDENT, Value: "name"},
 		Token{Type: COMMA, Value: ","},
 		Token{Type: IDENT, Value: "age"},
+		Token{Type: COMMA, Value: ","},
+		Token{Type: IDENT, Value: "SUM"},
 		Token{Type: COMMA, Value: ","},
 		Token{Type: FUNCTION, Value: "SUM"},
 		Token{Type: STARTPARENTHESIS, Value: "("},
