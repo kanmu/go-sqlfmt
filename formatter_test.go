@@ -859,4 +859,10 @@ SELECT
   xxx
 FROM xxx`,
 	},
+	{
+		src: `lock table in xxx`,
+		want: `
+LOCK table
+IN xxx`,
+	},
 }

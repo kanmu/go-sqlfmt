@@ -205,3 +205,14 @@ func writeTypeCast(buf *bytes.Buffer, token lexer.Token) {
 		buf.WriteString(fmt.Sprintf("%s", token.Value))
 	}
 }
+
+func writeLock(buf *bytes.Buffer, token lexer.Token) {
+	switch token.Type {
+	case lexer.LOCK:
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
+	case lexer.IN:
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
+	default:
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+	}
+}

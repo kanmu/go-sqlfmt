@@ -64,6 +64,8 @@ func NewRetriever(tokenSource []lexer.Token) *Retriever {
 		return &Retriever{TokenSource: tokenSource, endTokenTypes: lexer.EndOfFunction}
 	case lexer.TYPE:
 		return &Retriever{TokenSource: tokenSource, endTokenTypes: lexer.EndOfTypeCast}
+	case lexer.LOCK:
+		return &Retriever{TokenSource: tokenSource, endTokenTypes: lexer.EndOfLock}
 	}
 	return nil
 }
