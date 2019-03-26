@@ -45,6 +45,12 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 			v.Reindent(buf)
 			columnCount++
 		case *Subquery:
+			if token, ok := elements[i-1].(lexer.Token); ok {
+				if token.Type == lexer.EXISTS {
+					v.Reindent(buf)
+					continue
+				}
+			}
 			v.InColumnArea = true
 			v.ColumnCount = columnCount
 			v.Reindent(buf)
