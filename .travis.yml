@@ -7,4 +7,4 @@ go:
 
 script:
   - go fmt ./...
-  - go test -v
+  - go test -v ./sqlfmt

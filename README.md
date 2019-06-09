@@ -3,10 +3,6 @@
 [![Build Status](https://travis-ci.org/kanmu/go-sqlfmt.svg?branch=master)](https://travis-ci.org/kanmu/go-sqlfmt)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kanmu/go-sqlfmt)](https://goreportcard.com/report/github.com/kanmu/go-sqlfmt)
 
-## Demo
-
-![](https://raw.githubusercontent.com/kanmu/go-sqlfmt/master/gif/sql.gif?token=Al37VrrHKRlhQ_uOpxI30oKUX5OLNhlqks5cmu5AwA%3D%3D)
-
 ## Description
 
 The sqlfmt formats PostgreSQL statements in `.go` files into a consistent style.
@@ -89,22 +85,30 @@ ORDER BY
 ## Installation
 
 ```bash
-$ go get github.com/kanmu/go-sqlfmt/cmd/sqlfmt
+run git clone and go build -o sqlfmt 
 ```
-
 ## Usage
 
-- Provide an input file then state the location and name of the output file:
+- Provide flags and input files or directory  
   ```bash
-  $ sqlfmt -s input_file.go -o output_file.go
+  $ sqlfmt -w input_file.go 
   ```
 
-**OR**
-
-- Omit the output file location & name and the result will be displayed on your terminal:
-  ```bash
-  $ sqlfmt -s input_file.go
-  ```
+## Flags
+```
+  -l
+		Do not print reformatted sources to standard output.
+		If a file's formatting is different from src, print its name
+		to standard output.
+  -d
+		Do not print reformatted sources to standard output.
+		If a file's formatting is different than src, print diffs
+		to standard output.
+  -w
+                Do not print reformatted sources to standard output.
+                If a file's formatting is different from src, overwrite it
+                with gofmt style.
+```
 
 ## Limitations
 
