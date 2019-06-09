@@ -24,19 +24,18 @@ func Process(filename string, src []byte, opt *Options) ([]byte, error) {
 		parserMode |= parser.AllErrors
 	}
 
-	f, err := parser.ParseFile(fset, filename, src, parserMode)
+	astFile, err := parser.ParseFile(fset, filename, src, parserMode)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := replaceAstWithFormattedStmt(f); err != nil {
+	if err := replaceAstWithFormattedStmt(astFile); err != nil {
 		return nil, err
 	}
 
 	var buf bytes.Buffer
 
-	err = printer.Fprint(&buf, fset, f)
-	if err != nil {
+	if err = printer.Fprint(&buf, fset, astFile); err != nil {
 		return nil, err
 	}
 

@@ -82,7 +82,8 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 		return err
 	}
 
-	if res, err := sqlfmt.Process(filename, src, opt); err != nil {
+	res, err := sqlfmt.Process(filename, src, opt)
+	if err != nil {
 		return err
 	}
 
@@ -90,7 +91,7 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 		if *list {
 			fmt.Fprintln(out, filename)
 		}
-		if !*write {
+		if *write {
 			if err = ioutil.WriteFile(filename, res, 0); err != nil {
 				return err
 			}
