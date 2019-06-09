@@ -20,6 +20,7 @@ func replaceAstWithFormattedStmt(f *ast.File) error {
 			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
 				funcName := fun.Sel.Name
 				if funcName == QUERY || funcName == QUERYROW || funcName == EXEC {
+					// not for parsing url.Query
 					if len(x.Args) > 0 {
 						if arg, ok := x.Args[0].(*ast.BasicLit); ok {
 							sqlStmt := arg.Value
