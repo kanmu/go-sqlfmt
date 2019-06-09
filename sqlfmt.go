@@ -104,7 +104,11 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 			fmt.Printf("diff %s gofmt/%s\n", filename, filename)
 			out.Write(data)
 		}
+		if !*list && !*write && !*doDiff {
+			_, err = out.Write(res)
+		}
 	}
+
 	return nil
 }
 
