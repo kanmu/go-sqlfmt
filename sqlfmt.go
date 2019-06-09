@@ -1,4 +1,4 @@
-package sqlfmt
+package main
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ var (
 	list    = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
 	write   = flag.Bool("w", false, "write result to (source) file instead of stdout")
 	doDiff  = flag.Bool("d", false, "display diffs instead of rewriting files")
-	options = &Options{}
+	options = &sqlfmt.Options{}
 )
 
 func init() {
@@ -127,7 +127,7 @@ func sqlfmtMain() {
 		case dir.IsDir():
 			walkDir(path)
 		default:
-			info, err := os.Stat(filename)
+			info, err := os.Stat(path)
 			if err != nil {
 				report(err)
 			}

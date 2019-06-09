@@ -43,6 +43,5 @@ func Process(filename string, src []byte, opt *Options) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return out, nil
 }
