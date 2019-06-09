@@ -1,7 +1,6 @@
 package sqlfmt
 
 import (
-	"fmt"
 	"go/ast"
 	"strings"
 )
@@ -30,9 +29,7 @@ func replaceAstWithFormattedStmt(f *ast.File) error {
 							src := strings.Trim(sqlStmt, "`")
 							formattedStmt, e := Format(src)
 							if e != nil {
-								err = &FormatError{
-									Msg: e.Error(),
-								}
+								err = e
 								return false
 							}
 							arg.Value = "`" + formattedStmt + "`"
@@ -44,14 +41,4 @@ func replaceAstWithFormattedStmt(f *ast.File) error {
 		return true
 	})
 	return err
-}
-
-// FormatError is an error that occurs during Format
-type FormatError struct {
-	Msg string
-}
-
-// Error ...
-func (f *FormatError) Error() string {
-	return fmt.Sprintf("FORMAT ERROR :%#v\n", f.Msg)
 }
