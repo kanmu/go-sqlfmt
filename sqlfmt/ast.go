@@ -1,7 +1,10 @@
 package sqlfmt
 
 import (
+	"fmt"
 	"go/ast"
+	"go/token"
+	"log"
 	"strings"
 )
 
@@ -13,8 +16,7 @@ const (
 )
 
 // replaceAstWithFormattedStmt replace ast node with formatted SQL statement
-func replaceAstWithFormattedStmt(f *ast.File) error {
-	var err error
+func replaceAstWithFormattedStmt(f *ast.File, fset *token.FileSet) {
 	ast.Inspect(f, func(n ast.Node) bool {
 		if x, ok := n.(*ast.CallExpr); ok {
 			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
@@ -28,10 +30,10 @@ func replaceAstWithFormattedStmt(f *ast.File) error {
 								return true
 							}
 							src := strings.Trim(sqlStmt, "`")
-							formattedStmt, e := Format(src)
-							if e != nil {
-								err = e
-								return false
+							formattedStmt, err := Format(src)
+							if err != nil {
+								log.Println(fmt.Sprintf("format failed at %s\n", fset.Position(arg.Pos())))
+								return true
 							}
 							arg.Value = "`" + formattedStmt + "`"
 						}
@@ -41,5 +43,4 @@ func replaceAstWithFormattedStmt(f *ast.File) error {
 		}
 		return true
 	})
-	return err
 }

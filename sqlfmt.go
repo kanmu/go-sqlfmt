@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"go/scanner"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/kanmu/go-sqlfmt/sqlfmt"
 )
 
 var (
-	exitCode = 0
 	// main operation modes
 	list    = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
 	write   = flag.Bool("w", false, "write result to (source) file instead of stdout")
@@ -34,12 +35,6 @@ func init() {
 func usage() {
 	fmt.Fprintf(os.Stderr, "usage: sqlfmt [flags] [path ...]\n")
 	flag.PrintDefaults()
-	os.Exit(2)
-}
-
-func report(err error) {
-	scanner.PrintError(os.Stderr, err)
-	exitCode = 2
 }
 
 func isGoFile(info os.FileInfo) bool {
@@ -52,7 +47,7 @@ func visitFile(path string, info os.FileInfo, err error) error {
 		err = processFile(path, nil, os.Stdout, false)
 	}
 	if err != nil {
-		report(err)
+		processError(errors.Wrap(err, "visit file failed"))
 	}
 	return nil
 }
@@ -72,19 +67,19 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 	if in == nil {
 		f, err := os.Open(filename)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "os.Open failed")
 		}
 		in = f
 	}
 
 	src, err := ioutil.ReadAll(in)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "ioutil.ReadAll failed")
 	}
 
 	res, err := sqlfmt.Process(filename, src, opt)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "sqlfmt.Process failed")
 	}
 
 	if !bytes.Equal(src, res) {
@@ -93,22 +88,24 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 		}
 		if *write {
 			if err = ioutil.WriteFile(filename, res, 0); err != nil {
-				return err
+				return errors.Wrap(err, "ioutil.WriteFile failed")
 			}
 		}
 		if *doDiff {
 			data, err := diff(src, res)
 			if err != nil {
-				return fmt.Errorf("computing diff: %s", err)
+				return errors.Wrap(err, "diff failed")
 			}
 			fmt.Printf("diff %s gofmt/%s\n", filename, filename)
 			out.Write(data)
 		}
 		if !*list && !*write && !*doDiff {
 			_, err = out.Write(res)
+			if err != nil {
+				return errors.Wrap(err, "out.Write failed")
+			}
 		}
 	}
-
 	return nil
 }
 
@@ -116,9 +113,10 @@ func sqlfmtMain() {
 	flag.Usage = usage
 	flag.Parse()
 
+	// the user is piping their source into go-sqlfmt
 	if flag.NArg() == 0 {
 		if err := processFile("", os.Stdin, os.Stdout, true); err != nil {
-			report(err)
+			processError(errors.Wrap(err, "processFile failed"))
 		}
 		return
 	}
@@ -127,18 +125,18 @@ func sqlfmtMain() {
 		path := flag.Arg(i)
 		switch dir, err := os.Stat(path); {
 		case err != nil:
-			report(err)
+			processError(err)
 		case dir.IsDir():
 			walkDir(path)
 		default:
 			info, err := os.Stat(path)
 			if err != nil {
-				report(err)
+				processError(err)
 			}
 			if isGoFile(info) {
 				err = processFile(path, nil, os.Stdout, false)
 				if err != nil {
-					report(err)
+					processError(err)
 				}
 			}
 		}
@@ -147,9 +145,7 @@ func sqlfmtMain() {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	sqlfmtMain()
-	os.Exit(exitCode)
 }
 
 func diff(b1, b2 []byte) (data []byte, err error) {
@@ -177,4 +173,13 @@ func diff(b1, b2 []byte) (data []byte, err error) {
 		err = nil
 	}
 	return
+}
+
+func processError(err error) {
+	switch err {
+	case sqlfmt.FormatError:
+		log.Println(err)
+	default:
+		log.Fatal(err)
+	}
 }
