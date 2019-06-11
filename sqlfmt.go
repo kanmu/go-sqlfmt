@@ -47,8 +47,8 @@ func visitFile(path string, info os.FileInfo, err error) error {
 		err = processFile(path, nil, os.Stdout, false)
 	}
 	if err != nil {
-		//processError(errors.Wrap(err, "visit file failed"))
-		log.Fatal(err)
+		processError(errors.Wrap(err, "visit file failed"))
+
 	}
 	return nil
 }
@@ -117,8 +117,7 @@ func sqlfmtMain() {
 	// the user is piping their source into go-sqlfmt
 	if flag.NArg() == 0 {
 		if err := processFile("", os.Stdin, os.Stdout, true); err != nil {
-			//processError(errors.Wrap(err, "processFile failed"))
-			log.Fatal(err)
+			processError(errors.Wrap(err, "processFile failed"))
 		}
 		return
 	}
@@ -127,21 +126,18 @@ func sqlfmtMain() {
 		path := flag.Arg(i)
 		switch dir, err := os.Stat(path); {
 		case err != nil:
-			//processError(err)
-			log.Fatal(err)
+			processError(err)
 		case dir.IsDir():
 			walkDir(path)
 		default:
 			info, err := os.Stat(path)
 			if err != nil {
-				//processError(err)
-				log.Fatal(err)
+				processError(err)
 			}
 			if isGoFile(info) {
 				err = processFile(path, nil, os.Stdout, false)
 				if err != nil {
-					//processError(err)
-					log.Fatal(err)
+					processError(err)
 				}
 			}
 		}
@@ -180,11 +176,11 @@ func diff(b1, b2 []byte) (data []byte, err error) {
 	return
 }
 
-// func processError(err error) {
-// 	switch err.(type) {
-// 	case *sqlfmt.FormatError:
-// 		log.Println(err)
-// 	default:
-// 		log.Fatal(err)
-// 	}
-// }
+func processError(err error) {
+	switch err {
+	case sqlfmt.FormatError:
+		log.Println(err)
+	default:
+		log.Fatal(err)
+	}
+}
