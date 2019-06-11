@@ -17,30 +17,30 @@ func Format(src string) (string, error) {
 	t := lexer.NewTokenizer(src)
 	tokens, err := t.GetTokens()
 	if err != nil {
-		return src, errors.Wrapf(err, "Tokenize failed at:%#v", src)
+		return src, errors.Wrap(err, "Tokenize failed")
 	}
 
 	rs, err := parser.ParseTokens(tokens)
 	if err != nil {
-		return src, errors.Wrapf(err, "ParseTokens failed at:%s", src)
+		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
 	w := NewWriter(rs)
-	formattedStmt, err := w.Write()
+	res, err := w.Write()
 	if err != nil {
-		return "", errors.Wrapf(err, "Write failed at:%s", src)
+		return "", errors.Wrap(err, "Write failed")
 	}
 
-	if !compareStmtValue(src, formattedStmt) {
-		return src, fmt.Errorf("Format failed at:%s", src)
+	if !compare(src, res) {
+		return src, fmt.Errorf("result has differed form the source")
 	}
-	return formattedStmt, nil
+	return res, nil
 }
 
 // returns false if the value of formatted statement  (without any space) differs from source statement
-func compareStmtValue(stmt string, formattedStmt string) bool {
-	before := removeSpace(stmt)
-	after := removeSpace(formattedStmt)
+func compare(src string, res string) bool {
+	before := removeSpace(src)
+	after := removeSpace(res)
 
 	if v := strings.Compare(before, after); v != 0 {
 		return false
