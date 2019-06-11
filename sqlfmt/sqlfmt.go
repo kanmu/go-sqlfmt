@@ -19,7 +19,7 @@ type Options struct {
 }
 
 // Process formats SQL statement in .go file
-func Process(filename string, src []byte, opt *Options) ([]byte, *FormatError) {
+func Process(filename string, src []byte, opt *Options) ([]byte, error) {
 	fset := token.NewFileSet()
 	parserMode := parser.ParseComments
 	if opt.AllErrors {
@@ -31,7 +31,7 @@ func Process(filename string, src []byte, opt *Options) ([]byte, *FormatError) {
 		return nil, formatErr(errors.Wrap(err, "parser.ParseFile failed"))
 	}
 
-	replaceAstWithFormattedStmt(astFile, fset)
+	replaceAst(astFile, fset)
 
 	var buf bytes.Buffer
 
@@ -46,6 +46,6 @@ func Process(filename string, src []byte, opt *Options) ([]byte, *FormatError) {
 	return out, nil
 }
 
-func formatErr(err error) *FormatError {
-	return &FormatError{err: err}
+func formatErr(err error) error {
+	return &FormatError{msg: err.Error()}
 }

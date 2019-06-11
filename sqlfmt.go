@@ -177,8 +177,8 @@ func diff(b1, b2 []byte) (data []byte, err error) {
 }
 
 func processError(err error) {
-	switch err {
-	case sqlfmt.FormatError:
+	switch err.(type) {
+	case *sqlfmt.FormatError:
 		log.Println(err)
 	default:
 		log.Fatal(err)

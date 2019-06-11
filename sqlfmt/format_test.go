@@ -14,7 +14,7 @@ func TestCompareStmtValue(t *testing.T) {
 		after:  "select\n  *\nFROM xxx",
 		want:   true,
 	}
-	if got := compareStmtValue(test.before, test.after); got != test.want {
+	if got := compare(test.before, test.after); got != test.want {
 		t.Errorf("want %v#v got %#v", test.want, got)
 	}
 }
