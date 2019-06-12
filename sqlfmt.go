@@ -20,17 +20,10 @@ import (
 
 var (
 	// main operation modes
-	list    = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
-	write   = flag.Bool("w", false, "write result to (source) file instead of stdout")
-	doDiff  = flag.Bool("d", false, "display diffs instead of rewriting files")
-	options = &sqlfmt.Options{}
+	list   = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
+	write  = flag.Bool("w", false, "write result to (source) file instead of stdout")
+	doDiff = flag.Bool("d", false, "display diffs instead of rewriting files")
 )
-
-func init() {
-	flag.BoolVar(&options.PrintErrors, "p", false, "print non-fatal typechecking errors to stderr")
-	flag.BoolVar(&options.AllErrors, "e", false, "report all errors (not just the first 10 on different lines)")
-	flag.BoolVar(&options.RemoveBareReturns, "b", false, "remove bare returns")
-}
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "usage: sqlfmt [flags] [path ...]\n")
@@ -44,7 +37,7 @@ func isGoFile(info os.FileInfo) bool {
 
 func visitFile(path string, info os.FileInfo, err error) error {
 	if err == nil && isGoFile(info) {
-		err = processFile(path, nil, os.Stdout, false)
+		err = processFile(path, nil, os.Stdout)
 	}
 	if err != nil {
 		processError(errors.Wrap(err, "visit file failed"))
@@ -57,14 +50,7 @@ func walkDir(path string) {
 	filepath.Walk(path, visitFile)
 }
 
-func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error {
-	opt := options
-	if stdin {
-		nopt := *options
-		nopt.Fragment = true
-		opt = &nopt
-	}
-
+func processFile(filename string, in io.Reader, out io.Writer) error {
 	if in == nil {
 		f, err := os.Open(filename)
 		if err != nil {
@@ -78,7 +64,7 @@ func processFile(filename string, in io.Reader, out io.Writer, stdin bool) error
 		return errors.Wrap(err, "ioutil.ReadAll failed")
 	}
 
-	res, err := sqlfmt.Process(filename, src, opt)
+	res, err := sqlfmt.Process(filename, src)
 	if err != nil {
 		return errors.Wrap(err, "sqlfmt.Process failed")
 	}
@@ -116,7 +102,7 @@ func sqlfmtMain() {
 
 	// the user is piping their source into go-sqlfmt
 	if flag.NArg() == 0 {
-		if err := processFile("", os.Stdin, os.Stdout, true); err != nil {
+		if err := processFile("<standard input>", os.Stdin, os.Stdout); err != nil {
 			processError(errors.Wrap(err, "processFile failed"))
 		}
 		return
@@ -135,7 +121,7 @@ func sqlfmtMain() {
 				processError(err)
 			}
 			if isGoFile(info) {
-				err = processFile(path, nil, os.Stdout, false)
+				err = processFile(path, nil, os.Stdout)
 				if err != nil {
 					processError(err)
 				}

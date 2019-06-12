@@ -10,21 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Options specifies options for processing files.
-type Options struct {
-	Fragment          bool
-	PrintErrors       bool
-	AllErrors         bool
-	RemoveBareReturns bool
-}
-
 // Process formats SQL statement in .go file
-func Process(filename string, src []byte, opt *Options) ([]byte, error) {
+func Process(filename string, src []byte) ([]byte, error) {
 	fset := token.NewFileSet()
 	parserMode := parser.ParseComments
-	if opt.AllErrors {
-		parserMode |= parser.AllErrors
-	}
 
 	astFile, err := parser.ParseFile(fset, filename, src, parserMode)
 	if err != nil {
