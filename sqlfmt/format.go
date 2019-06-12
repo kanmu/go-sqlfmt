@@ -40,7 +40,7 @@ func Format(src string) (string, error) {
 	res = buf.String()
 
 	if !compare(src, res) {
-		return src, fmt.Errorf("value of formatted statement has diffed from source statement")
+		return src, fmt.Errorf("the formatted statement has diffed from the source")
 	}
 	return res, nil
 }

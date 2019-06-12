@@ -79,10 +79,6 @@ func (r *Retriever) Retrieve() ([]group.Reindenter, int, error) {
 	return r.result, r.endIdx, nil
 }
 
-// TODO: in order to avoid infiniteloop when unexpected clause comes in the retriever
-// looking for better a solution!!!
-var infiniteLoopBreaker int
-
 // appendGroupsToResult appends token to result as Reindenter until endTokenType appears
 // if subGroup is found in the target group, subGroup will be appended to result as a Reindenter, calling itself recursive
 // it returns error if it cannot find any endTokenTypes
@@ -92,12 +88,8 @@ func (r *Retriever) appendGroupsToResult() error {
 		token lexer.Token
 	)
 	for {
-		if infiniteLoopBreaker > 10000 {
-			infiniteLoopBreaker = 0
-			return fmt.Errorf("infinite loop may have occurred with some unexpected reason")
-		}
-		if idx == len(r.TokenSource) && !r.isEndGroup(token, r.endTokenTypes, idx) || idx > len(r.TokenSource) {
-			return fmt.Errorf("can not find endToken")
+		if idx > len(r.TokenSource) {
+			return fmt.Errorf("the retriever may have not found the endToken")
 		}
 
 		token = r.TokenSource[idx]
@@ -115,12 +107,10 @@ func (r *Retriever) appendGroupsToResult() error {
 				return err
 			}
 			idx = subGroupRetriever.getNextTokenIdx(token.Type, idx)
-			infiniteLoopBreaker++
 			continue
 		}
 		r.result = append(r.result, token)
 		idx++
-		infiniteLoopBreaker++
 	}
 }
 
