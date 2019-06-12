@@ -33,7 +33,7 @@ func Format(src string) (string, error) {
 	}
 
 	if !compare(src, res) {
-		return src, fmt.Errorf("result has differed form the source")
+		return src, fmt.Errorf("the formatted statement has diffed from the source")
 	}
 	return res, nil
 }
