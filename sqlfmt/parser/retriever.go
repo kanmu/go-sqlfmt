@@ -93,6 +93,7 @@ func (r *Retriever) appendGroupsToResult() error {
 	)
 	for {
 		if infiniteLoopBreaker > 10000 {
+			infiniteLoopBreaker = 0
 			return fmt.Errorf("infinite loop may have occurred with some unexpected reason")
 		}
 		if idx == len(r.TokenSource) && !r.isEndGroup(token, r.endTokenTypes, idx) || idx > len(r.TokenSource) {
