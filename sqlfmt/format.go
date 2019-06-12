@@ -4,9 +4,16 @@ import (
 	"fmt"
 	"strings"
 
+	"bytes"
+
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser"
 	"github.com/pkg/errors"
+)
+
+var (
+	buf bytes.Buffer
+	res string
 )
 
 // Format formats src in 3 steps
@@ -25,14 +32,15 @@ func Format(src string) (string, error) {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	w := NewWriter(rs)
-	res, err := w.Write()
-	if err != nil {
-		return "", errors.Wrap(err, "Write failed")
+	for _, r := range rs {
+		if err := r.Reindent(&buf); err != nil {
+			return src, errors.Wrap(err, "Reindent failed")
+		}
 	}
+	res = buf.String()
 
 	if !compare(src, res) {
-		return src, fmt.Errorf("result has differed form the source")
+		return src, fmt.Errorf("value of formatted statement has diffed from source statement")
 	}
 	return res, nil
 }

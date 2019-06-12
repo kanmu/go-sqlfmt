@@ -20,10 +20,9 @@ func Process(filename string, src []byte) ([]byte, error) {
 		return nil, formatErr(errors.Wrap(err, "parser.ParseFile failed"))
 	}
 
-	replaceAst(astFile, fset)
+	replaceAst(fset, astFile)
 
 	var buf bytes.Buffer
-
 	if err = printer.Fprint(&buf, fset, astFile); err != nil {
 		return nil, formatErr(errors.Wrap(err, "printer.Fprint failed"))
 	}

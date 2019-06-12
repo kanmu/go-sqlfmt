@@ -16,7 +16,7 @@ const (
 )
 
 // replaceAst replace ast node with formatted SQL statement
-func replaceAst(f *ast.File, fset *token.FileSet) {
+func replaceAst(fset *token.FileSet, f *ast.File) {
 	ast.Inspect(f, func(n ast.Node) bool {
 		if x, ok := n.(*ast.CallExpr); ok {
 			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
