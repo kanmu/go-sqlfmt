@@ -1,11 +1,13 @@
 package sqlfmt
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser"
+	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
 )
 
@@ -25,16 +27,26 @@ func Format(src string) (string, error) {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	w := NewWriter(rs)
-	res, err := w.Write()
+	res, err := getFormattedStmt(rs)
 	if err != nil {
-		return "", errors.Wrap(err, "Write failed")
+		return src, errors.Wrap(err, "getFormattedStmt failed")
 	}
 
 	if !compare(src, res) {
 		return src, fmt.Errorf("result has differed form the source")
 	}
 	return res, nil
+}
+
+func getFormattedStmt(rs []group.Reindenter) (string, error) {
+	var buf bytes.Buffer
+
+	for _, r := range rs {
+		if err := r.Reindent(&buf); err != nil {
+			return "", errors.Wrap(err, "Reindent failed")
+		}
+	}
+	return buf.String(), nil
 }
 
 // returns false if the value of formatted statement  (without any space) differs from source statement
