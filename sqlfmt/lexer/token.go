@@ -119,7 +119,7 @@ var (
 	EndOfHaving      = []TokenType{LIMIT, OFFSET, FETCH, ORDER, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfOrderBy     = []TokenType{LIMIT, FETCH, OFFSET, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfLimitClause = []TokenType{UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
-	EndOfParenthesis = []TokenType{ENDPARENTHESIS, UNION, EXCEPT, INTERSECT}
+	EndOfParenthesis = []TokenType{ENDPARENTHESIS}
 	EndOfTieClause   = []TokenType{SELECT}
 	EndOfUpdate      = []TokenType{WHERE, SET, RETURNING, EOF}
 	EndOfSet         = []TokenType{WHERE, RETURNING, EOF}

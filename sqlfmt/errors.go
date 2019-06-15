@@ -6,9 +6,9 @@ import (
 
 // FormatError is an error that occurred while sqlfmt.Process
 type FormatError struct {
-	err error
+	msg string
 }
 
 func (e *FormatError) Error() string {
-	return fmt.Sprint(e.err)
+	return fmt.Sprint(e.msg)
 }
