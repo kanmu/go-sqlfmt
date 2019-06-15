@@ -391,6 +391,7 @@ var sqlKeywordMap = map[string]TokenType{
 	"LAST":        LAST,
 	"AT":          AT,
 	"LOCK":        LOCK,
+	"WITH":        WITH,
 }
 
 var typeWithParenMap = map[string]TokenType{
