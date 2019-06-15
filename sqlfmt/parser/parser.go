@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
@@ -32,6 +34,8 @@ func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
 		return p.parseInsertStmt(tokens)
 	case lexer.LOCK:
 		return p.parseLockStmt(tokens)
+	case lexer.WITH:
+		return p.parseWithStmt(tokens)
 	}
 	return nil, errors.New("no sql statement can not be parsed")
 }
@@ -122,6 +126,15 @@ func (p *parser) parseInsertStmt(tokens []lexer.Token) ([]group.Reindenter, erro
 	return p.result, nil
 }
 
+func (p *parser) parseWithStmt(tokens []lexer.Token) ([]group.Reindenter, error) {
+	p.retrieveWithGroup(tokens)
+	if p.err != nil {
+		return nil, errors.Wrap(p.err, "parse With Stmt failed")
+	}
+
+	return p.result, p.err
+}
+
 // ParseLockStmt parses tokens of Lock stmt until EOF appears
 // it calls each Retrieve function, appending clause group to result
 func (p *parser) parseLockStmt(tokens []lexer.Token) ([]group.Reindenter, error) {
@@ -159,6 +172,22 @@ func (p *parser) retrieveSelectGroup(tokens []lexer.Token) {
 	if nextToken.IsTieClauseStart() {
 		p.retrieveTieGroup(tokens)
 	}
+}
+
+//
+func (p *parser) retrieveWithGroup(tokens []lexer.Token) {
+	r := NewRetriever(tokens)
+	withElements, _, e := r.Retrieve()
+	if e != nil {
+		p.err = e
+		return
+	}
+
+	for _, v := range withElements {
+		fmt.Printf("%#v\n", v)
+	}
+
+	p.result = append(p.result, &group.Select{Element: withElements})
 }
 
 func (p *parser) retrieveFromGroup(tokens []lexer.Token) {
