@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
@@ -183,11 +181,7 @@ func (p *parser) retrieveWithGroup(tokens []lexer.Token) {
 		return
 	}
 
-	for _, v := range withElements {
-		fmt.Printf("%#v\n", v)
-	}
-
-	p.result = append(p.result, &group.Select{Element: withElements})
+	p.result = append(p.result, &group.With{Element: withElements})
 }
 
 func (p *parser) retrieveFromGroup(tokens []lexer.Token) {

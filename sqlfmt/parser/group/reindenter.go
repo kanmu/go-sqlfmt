@@ -35,6 +35,8 @@ func write(buf *bytes.Buffer, token lexer.Token, indent int) {
 		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, token.Value, WhiteSpace))
 	case strings.HasPrefix(token.Value, "::"):
 		buf.WriteString(fmt.Sprintf("%s", token.Value))
+	case token.Type == lexer.WITH:
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
 	default:
 		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
 	}
