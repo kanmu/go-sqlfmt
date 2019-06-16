@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestCompareStmtValue(t *testing.T) {
+func TestCompare(t *testing.T) {
 	test := struct {
 		before string
 		after  string
