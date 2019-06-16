@@ -192,8 +192,13 @@ func (r *Retriever) containIrregularGroupMaker(ttype lexer.TokenType, idx int) b
 	if firstTokenOfCurrentGroup.Type == lexer.FUNCTION && ttype == lexer.ORDER {
 		return true
 	}
-	//in order to ignore "(" in TypeCast group
+	// in order to ignore "(" in TypeCast group
 	if firstTokenOfCurrentGroup.Type == lexer.TYPE && ttype == lexer.STARTPARENTHESIS {
+		return true
+	}
+
+	// in order to ignore ORDER BY in window function
+	if firstTokenOfCurrentGroup.Type == lexer.STARTPARENTHESIS && ttype == lexer.ORDER {
 		return true
 	}
 
