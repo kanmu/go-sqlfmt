@@ -68,8 +68,9 @@ func NewRetriever(tokenSource []lexer.Token) *Retriever {
 		return &Retriever{TokenSource: tokenSource, endTokenTypes: lexer.EndOfLock}
 	case lexer.WITH:
 		return &Retriever{TokenSource: tokenSource, endTokenTypes: lexer.EndOfWith}
+	default:
+		return nil
 	}
-	return nil
 }
 
 // Retrieve Retrieves group of SQL clauses
@@ -114,6 +115,7 @@ func (r *Retriever) appendGroupsToResult() error {
 		r.result = append(r.result, token)
 		idx++
 	}
+
 }
 
 // check tokens contain endTokenType
@@ -308,6 +310,8 @@ func createSubGroup(tokenSource []group.Reindenter) group.Reindenter {
 		return &group.Set{Element: tokenSource}
 	case lexer.RETURNING:
 		return &group.Returning{Element: tokenSource}
+	case lexer.LOCK:
+		return &group.Lock{Element: tokenSource}
 	}
 	return nil
 }
