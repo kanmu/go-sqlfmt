@@ -229,7 +229,7 @@ func (r *Retriever) isRangeOfJoinStart(idx int) bool {
 
 // appendSubGroupToResult makes Reindenter from subGroup result and append it to result
 func (r *Retriever) appendSubGroupToResult(result []group.Reindenter, lev int) error {
-	if subGroup := createSubGroup(result); subGroup != nil {
+	if subGroup := createGroup(result); subGroup != nil {
 		subGroup.IncrementIndentLevel(lev)
 		r.result = append(r.result, subGroup)
 	} else {
@@ -252,8 +252,8 @@ func (r *Retriever) getNextTokenIdx(ttype lexer.TokenType, idx int) int {
 	return idx
 }
 
-// createSubGroup creates each clause group from slice of tokens, returning it as Reindenter interface
-func createSubGroup(tokenSource []group.Reindenter) group.Reindenter {
+// createGroup creates each clause group from slice of tokens, returning it as Reindenter interface
+func createGroup(tokenSource []group.Reindenter) group.Reindenter {
 	firstToken, _ := tokenSource[0].(lexer.Token)
 
 	switch firstToken.Type {

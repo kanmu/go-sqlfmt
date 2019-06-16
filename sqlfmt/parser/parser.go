@@ -38,7 +38,7 @@ func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
 			return nil, errors.Wrap(err, "ParseTokens failed")
 		}
 
-		group := createSubGroup(element)
+		group := createGroup(element)
 		result = append(result, group)
 
 		offset += endIdx
