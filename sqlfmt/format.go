@@ -48,15 +48,20 @@ func getFormattedStmt(rs []group.Reindenter, distance int) (string, error) {
 		}
 	}
 
-	res := strings.NewReader(buf.String())
-	s := bufio.NewScanner(res)
-	var result string
-	for s.Scan() {
-		r := fmt.Sprintf("%s%s", strings.Repeat(" ", distance), s.Text())
-		result += r + "\n"
+	if distance != 0 {
+		return putDistance(buf.String(), distance), nil
 	}
+	return buf.String(), nil
+}
 
-	return result, nil
+func putDistance(src string, distance int) string {
+	scanner := bufio.NewScanner(strings.NewReader(src))
+
+	var result string
+	for scanner.Scan() {
+		result += fmt.Sprintf("%s%s%s", strings.Repeat(group.WhiteSpace, distance), scanner.Text(), "\n")
+	}
+	return result
 }
 
 // returns false if the value of formatted statement  (without any space) differs from source statement
