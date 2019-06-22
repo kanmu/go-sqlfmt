@@ -1,6 +1,7 @@
 package sqlfmt
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"strings"
@@ -15,7 +16,7 @@ import (
 // 1: tokenize src
 // 2: parse tokens by SQL clause group
 // 3: for each clause group (Reindenter), add indentation or new line in the correct position
-func Format(src string) (string, error) {
+func Format(src string, distance int) (string, error) {
 	t := lexer.NewTokenizer(src)
 	tokens, err := t.GetTokens()
 	if err != nil {
@@ -27,7 +28,7 @@ func Format(src string) (string, error) {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	res, err := getFormattedStmt(rs)
+	res, err := getFormattedStmt(rs, distance)
 	if err != nil {
 		return src, errors.Wrap(err, "getFormattedStmt failed")
 	}
@@ -38,7 +39,7 @@ func Format(src string) (string, error) {
 	return res, nil
 }
 
-func getFormattedStmt(rs []group.Reindenter) (string, error) {
+func getFormattedStmt(rs []group.Reindenter, distance int) (string, error) {
 	var buf bytes.Buffer
 
 	for _, r := range rs {
@@ -46,7 +47,16 @@ func getFormattedStmt(rs []group.Reindenter) (string, error) {
 			return "", errors.Wrap(err, "Reindent failed")
 		}
 	}
-	return buf.String(), nil
+
+	res := strings.NewReader(buf.String())
+	s := bufio.NewScanner(res)
+	var result string
+	for s.Scan() {
+		r := fmt.Sprintf("%s%s", strings.Repeat(" ", distance), s.Text())
+		result += r + "\n"
+	}
+
+	return result, nil
 }
 
 // returns false if the value of formatted statement  (without any space) differs from source statement

@@ -16,7 +16,7 @@ const (
 )
 
 // replaceAst replace ast node with formatted SQL statement
-func replaceAst(f *ast.File, fset *token.FileSet) {
+func replaceAst(f *ast.File, fset *token.FileSet, distance int) {
 	ast.Inspect(f, func(n ast.Node) bool {
 		if x, ok := n.(*ast.CallExpr); ok {
 			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
@@ -30,7 +30,7 @@ func replaceAst(f *ast.File, fset *token.FileSet) {
 								return true
 							}
 							src := strings.Trim(sqlStmt, "`")
-							res, err := Format(src)
+							res, err := Format(src, distance)
 							if err != nil {
 								log.Println(fmt.Sprintf("Format failed at %s: %v", fset.Position(arg.Pos()), err))
 								return true

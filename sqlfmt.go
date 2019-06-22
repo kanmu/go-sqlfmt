@@ -20,9 +20,10 @@ import (
 
 var (
 	// main operation modes
-	list   = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
-	write  = flag.Bool("w", false, "write result to (source) file instead of stdout")
-	doDiff = flag.Bool("d", false, "display diffs instead of rewriting files")
+	list     = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
+	write    = flag.Bool("w", false, "write result to (source) file instead of stdout")
+	doDiff   = flag.Bool("d", false, "display diffs instead of rewriting files")
+	distance = flag.Int("distance", 0, "write the distane from the edge to the begin of SQL statements")
 )
 
 func usage() {
@@ -64,7 +65,7 @@ func processFile(filename string, in io.Reader, out io.Writer) error {
 		return errors.Wrap(err, "ioutil.ReadAll failed")
 	}
 
-	res, err := sqlfmt.Process(filename, src)
+	res, err := sqlfmt.Process(filename, src, *distance)
 	if err != nil {
 		return errors.Wrap(err, "sqlfmt.Process failed")
 	}
