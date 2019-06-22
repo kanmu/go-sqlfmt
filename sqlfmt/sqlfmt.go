@@ -10,8 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Options for go-sqlfmt
+type Options struct {
+	Distance int
+}
+
 // Process formats SQL statement in .go file
-func Process(filename string, src []byte, distance int) ([]byte, error) {
+func Process(filename string, src []byte, options *Options) ([]byte, error) {
 	fset := token.NewFileSet()
 	parserMode := parser.ParseComments
 
@@ -20,7 +25,7 @@ func Process(filename string, src []byte, distance int) ([]byte, error) {
 		return nil, formatErr(errors.Wrap(err, "parser.ParseFile failed"))
 	}
 
-	replaceAst(astFile, fset, distance)
+	replaceAst(astFile, fset, options)
 
 	var buf bytes.Buffer
 

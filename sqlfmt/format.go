@@ -16,7 +16,7 @@ import (
 // 1: tokenize src
 // 2: parse tokens by SQL clause group
 // 3: for each clause group (Reindenter), add indentation or new line in the correct position
-func Format(src string, distance int) (string, error) {
+func Format(src string, options *Options) (string, error) {
 	t := lexer.NewTokenizer(src)
 	tokens, err := t.GetTokens()
 	if err != nil {
@@ -28,7 +28,7 @@ func Format(src string, distance int) (string, error) {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	res, err := getFormattedStmt(rs, distance)
+	res, err := getFormattedStmt(rs, options.Distance)
 	if err != nil {
 		return src, errors.Wrap(err, "getFormattedStmt failed")
 	}
