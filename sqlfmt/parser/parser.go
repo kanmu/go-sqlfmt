@@ -47,5 +47,5 @@ func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
 }
 
 func isSQL(ttype lexer.TokenType) bool {
-	return ttype == lexer.SELECT || ttype == lexer.UPDATE || ttype == lexer.DELETE || ttype == lexer.LOCK || ttype == lexer.WITH
+	return ttype == lexer.SELECT || ttype == lexer.UPDATE || ttype == lexer.DELETE || ttype == lexer.INSERT || ttype == lexer.LOCK || ttype == lexer.WITH
 }

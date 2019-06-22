@@ -279,6 +279,22 @@ func createGroup(tokenSource []group.Reindenter) group.Reindenter {
 		return &group.LimitClause{Element: tokenSource}
 	case lexer.UNION, lexer.INTERSECT, lexer.EXCEPT:
 		return &group.TieClause{Element: tokenSource}
+	case lexer.UPDATE:
+		return &group.Update{Element: tokenSource}
+	case lexer.SET:
+		return &group.Set{Element: tokenSource}
+	case lexer.RETURNING:
+		return &group.Returning{Element: tokenSource}
+	case lexer.LOCK:
+		return &group.Lock{Element: tokenSource}
+	case lexer.INSERT:
+		return &group.Insert{Element: tokenSource}
+	case lexer.VALUES:
+		return &group.Values{Element: tokenSource}
+	case lexer.DELETE:
+		return &group.Delete{Element: tokenSource}
+	case lexer.WITH:
+		return &group.With{Element: tokenSource}
 	// endKeyWord of CASE group("END") has to be included in the group, so it is appended to result
 	case lexer.CASE:
 		endToken := lexer.Token{Type: lexer.END, Value: "END"}
@@ -304,14 +320,6 @@ func createGroup(tokenSource []group.Reindenter) group.Reindenter {
 		tokenSource = append(tokenSource, endToken)
 
 		return &group.TypeCast{Element: tokenSource}
-	case lexer.UPDATE:
-		return &group.Update{Element: tokenSource}
-	case lexer.SET:
-		return &group.Set{Element: tokenSource}
-	case lexer.RETURNING:
-		return &group.Returning{Element: tokenSource}
-	case lexer.LOCK:
-		return &group.Lock{Element: tokenSource}
 	}
 	return nil
 }

@@ -126,7 +126,7 @@ var (
 	EndOfSet         = []TokenType{WHERE, RETURNING, EOF}
 	EndOfReturning   = []TokenType{EOF}
 	EndOfDelete      = []TokenType{WHERE, FROM, EOF}
-	EndOfInsert      = []TokenType{VALUES}
+	EndOfInsert      = []TokenType{VALUES, EOF}
 	EndOfValues      = []TokenType{UPDATE, RETURNING, EOF}
 	EndOfFunction    = []TokenType{ENDPARENTHESIS}
 	EndOfTypeCast    = []TokenType{ENDPARENTHESIS}
