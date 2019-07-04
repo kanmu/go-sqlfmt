@@ -6,6 +6,8 @@ import (
 	"go/token"
 	"log"
 	"strings"
+
+	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 )
 
 // sqlfmt retrieves all strings from "Query" and "QueryRow" and "Exec" functions in .go file
@@ -35,7 +37,9 @@ func replaceAst(f *ast.File, fset *token.FileSet, options *Options) {
 								log.Println(fmt.Sprintf("Format failed at %s: %v", fset.Position(arg.Pos()), err))
 								return true
 							}
-							arg.Value = "`" + res + "`"
+							// FIXME
+							// more elegant
+							arg.Value = "`" + res + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
 						}
 					}
 				}
