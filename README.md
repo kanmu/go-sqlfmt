@@ -108,6 +108,7 @@ run git clone and go build -o sqlfmt
                 Do not print reformatted sources to standard output.
                 If a file's formatting is different from src, overwrite it
                 with gofmt style.
+  -distance     Write the distane from the edge to the begin of SQL statements
 ```
 
 ## Limitations
@@ -148,9 +149,19 @@ run git clone and go build -o sqlfmt
 - `WITHIN GROUP`
 - `DISTINCT ON(xxx)`
 - `select(array)`
+- Comments after commna such as 
+`select xxxx, --comment
+        xxxx
+`
 - Nested square brackets or braces such as `[[xx], xx]`
   - Currently being formatted into this: `[[ xx], xx]`
   - Ideally, it should be formatted into this: `[[xx], xx]`
+
+- Nested functions such as `sum(average(xxx))`
+  - Currently being formatted into this: `SUM( AVERAGE(xxx))`
+  - Ideally, it should be formatted into this: `SUM(AVERAGE(xxx))`
+  
+ 
 
 ## Future Work
 
