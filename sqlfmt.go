@@ -107,6 +107,9 @@ func sqlfmtMain() {
 
 	// the user is piping their source into go-sqlfmt
 	if flag.NArg() == 0 {
+		if *write {
+			log.Fatal("can not use -w while using pipeline")
+		}
 		if err := processFile("<standard input>", os.Stdin, os.Stdout); err != nil {
 			processError(errors.Wrap(err, "processFile failed"))
 		}
