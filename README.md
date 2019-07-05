@@ -108,7 +108,8 @@ run git clone and go build -o sqlfmt
                 Do not print reformatted sources to standard output.
                 If a file's formatting is different from src, overwrite it
                 with gofmt style.
-  -distance     Write the distane from the edge to the begin of SQL statements
+  -distance     
+                Write the distane from the edge to the begin of SQL statements
 ```
 
 ## Limitations
