@@ -12,10 +12,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Format formats src in 3 steps
+// Format formats given sql statement and returns the formatted statement.
 // 1: tokenize src
 // 2: parse tokens by SQL clause group
-// 3: for each clause group (Reindenter), add indentation or new line in the correct position
 func Format(src string, options *Options) (string, error) {
 	t := lexer.NewTokenizer(src)
 	tokens, err := t.GetTokens()
@@ -51,6 +50,9 @@ func getFormattedStmt(rs []group.Reindenter, distance int) (string, error) {
 	if distance != 0 {
 		return putDistance(buf.String(), distance), nil
 	}
+
+	//putDistance(buf.String(), distance)
+
 	return buf.String(), nil
 }
 
@@ -59,6 +61,12 @@ func putDistance(src string, distance int) string {
 
 	var result string
 	for scanner.Scan() {
+		// FIXME: more elegant
+		// this is for putting the newline before SQL statements
+		if scanner.Text() == "" {
+			result += group.NewLine
+			continue
+		}
 		result += fmt.Sprintf("%s%s%s", strings.Repeat(group.WhiteSpace, distance), scanner.Text(), "\n")
 	}
 	return result

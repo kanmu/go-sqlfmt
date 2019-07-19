@@ -37,8 +37,8 @@ func replaceAst(f *ast.File, fset *token.FileSet, options *Options) {
 								log.Println(fmt.Sprintf("Format failed at %s: %v", fset.Position(arg.Pos()), err))
 								return true
 							}
-							// FIXME
-							// more elegant
+							// FIXME: more elegant
+							// this is for the backquote appearing after SQL statements
 							arg.Value = "`" + res + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
 						}
 					}
