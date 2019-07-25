@@ -1,7 +1,6 @@
 package sqlfmt
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"strings"
@@ -12,10 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Format formats given sql statement and returns the formatted statement.
+// format formats given sql statement and returns the formatted statement.
 // 1: tokenize src
 // 2: parse tokens by SQL clause group
-func Format(src string, options *Options) (string, error) {
+func format(src string, options *Options) (string, error) {
 	t := lexer.NewTokenizer(src)
 	tokens, err := t.GetTokens()
 	if err != nil {
@@ -46,30 +45,7 @@ func getFormattedStmt(rs []group.Reindenter, distance int) (string, error) {
 			return "", errors.Wrap(err, "Reindent failed")
 		}
 	}
-
-	if distance != 0 {
-		return putDistance(buf.String(), distance), nil
-	}
-
-	//putDistance(buf.String(), distance)
-
 	return buf.String(), nil
-}
-
-func putDistance(src string, distance int) string {
-	scanner := bufio.NewScanner(strings.NewReader(src))
-
-	var result string
-	for scanner.Scan() {
-		// FIXME: more elegant
-		// this is for putting the newline before SQL statements
-		if scanner.Text() == "" {
-			result += group.NewLine
-			continue
-		}
-		result += fmt.Sprintf("%s%s%s", strings.Repeat(group.WhiteSpace, distance), scanner.Text(), "\n")
-	}
-	return result
 }
 
 // returns false if the value of formatted statement  (without any space) differs from source statement
