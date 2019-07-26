@@ -43,8 +43,10 @@ func inspectAndReplace(fset *token.FileSet, f *ast.File, options *Options) {
 
 // replace replace the node with formatted statement
 func replace(node *ast.BasicLit, options *Options) error {
+	// node.Value should have SQL statement
 	stmt := node.Value
 
+	// ignore SQL without backquote
 	if !strings.HasPrefix(stmt, "`") {
 		return nil
 	}
@@ -55,11 +57,11 @@ func replace(node *ast.BasicLit, options *Options) error {
 		return errors.Wrap(err, "format failed")
 	}
 
-	res = getStmtWithDistance(res, options.Distance)
+	result := getStmtWithDistance(res, options.Distance)
 
 	// FIXME: more elegant
 	// this is for the backquote appearing after SQL statements
-	node.Value = "`" + res + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
+	node.Value = "`" + result + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
 
 	return nil
 }
