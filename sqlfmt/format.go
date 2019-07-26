@@ -11,10 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// format formats given sql statement and returns the formatted statement.
-// 1: tokenize src
-// 2: parse tokens by SQL clause group
-func format(src string, options *Options) (string, error) {
+// format formats given sql statement and returns the formatted statement
+func format(src string) (string, error) {
 	t := lexer.NewTokenizer(src)
 	tokens, err := t.GetTokens()
 	if err != nil {
@@ -26,7 +24,7 @@ func format(src string, options *Options) (string, error) {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	res, err := getFormattedStmt(rs, options.Distance)
+	res, err := getFormattedStmt(rs)
 	if err != nil {
 		return src, errors.Wrap(err, "getFormattedStmt failed")
 	}
@@ -37,7 +35,7 @@ func format(src string, options *Options) (string, error) {
 	return res, nil
 }
 
-func getFormattedStmt(rs []group.Reindenter, distance int) (string, error) {
+func getFormattedStmt(rs []group.Reindenter) (string, error) {
 	var buf bytes.Buffer
 
 	for _, r := range rs {

@@ -41,6 +41,7 @@ func inspectAndReplace(fset *token.FileSet, f *ast.File, options *Options) {
 	})
 }
 
+// replace replace the node with formatted statement
 func replace(node *ast.BasicLit, options *Options) error {
 	stmt := node.Value
 
@@ -49,15 +50,12 @@ func replace(node *ast.BasicLit, options *Options) error {
 	}
 
 	src := strings.Trim(stmt, "`")
-	// optionはここでは渡さずに、resに対して
-	res, err := format(src, options)
+	res, err := format(src)
 	if err != nil {
 		return errors.Wrap(err, "format failed")
 	}
 
-	if options.Distance != 0 {
-		res = getStmtWithDistance(res, options.Distance)
-	}
+	res = getStmtWithDistance(res, options.Distance)
 
 	// FIXME: more elegant
 	// this is for the backquote appearing after SQL statements
