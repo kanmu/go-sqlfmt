@@ -29,9 +29,8 @@ func TestRemove(t *testing.T) {
 
 func TestFormat(t *testing.T) {
 	for _, tt := range formatTestingData {
-		opt := &Options{}
 		t.Run(tt.src, func(t *testing.T) {
-			got, err := format(tt.src, opt)
+			got, err := format(tt.src)
 			if err != nil {
 				t.Errorf("should be nil, got %v", err)
 			}
