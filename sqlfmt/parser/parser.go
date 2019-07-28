@@ -6,15 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: calling each Retrieve function is not smart, so should be refactored
-
-// Parser parses Token Source
-type parser struct {
-	offset int
-	result []group.Reindenter
-	err    error
-}
-
 // ParseTokens parses Tokens, creating slice of Reindenter
 // each Reindenter is group of SQL Clause such as SelectGroup, FromGroup ...etc
 func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
