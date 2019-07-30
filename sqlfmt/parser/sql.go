@@ -192,6 +192,7 @@ LOOP:
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
 			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v.hasParent = true
 			result = append(result, v)
 			idx += len
 		default:
@@ -234,6 +235,7 @@ LOOP:
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
 			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v.hasParent = true
 			result = append(result, v)
 			idx += len
 		default:
@@ -278,6 +280,7 @@ LOOP:
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
 			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v.hasParent = true
 			result = append(result, v)
 			idx += len
 		default:
@@ -320,6 +323,7 @@ LOOP:
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
 			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v.hasParent = true
 			result = append(result, v)
 			idx += len
 		default:
