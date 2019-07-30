@@ -23,13 +23,9 @@ type Value struct {
 	hasParent     bool
 }
 
-type parser struct {
-	values []Value
-}
-
 // name of value
 const (
-	CRUD         = "crud"
+	FIRSTVALUE   = "first_value"
 	BRACKET      = "bracket"
 	BRACE        = "brace"
 	PARENTHESIS  = "parenthesis"
@@ -39,7 +35,7 @@ const (
 	IDENT        = "ident"
 )
 
-func (p *parser) parseValues(tokens []lexer.Token) []*Value {
+func parseValues(tokens []lexer.Token) []*Value {
 	var (
 		values []*Value
 		idx    int
@@ -48,43 +44,45 @@ func (p *parser) parseValues(tokens []lexer.Token) []*Value {
 LOOP:
 	for {
 		token := tokens[idx]
+
+		// first value such as SELECT, INSERT, LOCK is parsed as FIRSTVALUE for convenience
 		if idx == 0 {
-			// first value must be SELECT, UPDATE, INSERT, DELETE and LOCK
 			values = append(values, &Value{
-				name:   CRUD,
+				name:   FIRSTVALUE,
 				values: []interface{}{token},
 			})
+			idx++
 		}
 
 		switch token.Type {
 		case lexer.EOF:
 			break LOOP
 		case lexer.STARTBRACKET:
-			v, len := p.parseBracket(tokens[idx:], tokens[idx-1])
+			v, len := parseBracket(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		case lexer.STARTBRACE:
-			v, len := p.parseBrace(tokens[idx:], tokens[idx-1])
+			v, len := parseBrace(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		case lexer.FUNCTION:
-			v, len := p.parseFunction(tokens[idx:], tokens[idx-1])
+			v, len := parseFunction(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		case lexer.TYPE:
-			v, len := p.parseTypeCast(tokens[idx:], tokens[idx-1])
+			v, len := parseTypeCast(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		case lexer.CASE:
-			v, len := p.parseBracket(tokens[idx:], tokens[idx-1])
+			v, len := parseBracket(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		case lexer.STARTPARENTHESIS:
-			v, len := p.parseBracket(tokens[idx:], tokens[idx-1])
+			v, len := parseBracket(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		default:
-			v, len := p.parseIdent(tokens[idx:], tokens[idx-1])
+			v, len := parseIdent(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		}
@@ -93,7 +91,7 @@ LOOP:
 }
 
 // ここで、distinct from　や、その他 句のパースで便利なものはここで分けておく
-func (p *parser) parseIdent(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseIdent(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var result []interface{}
 
 	// ひとまず初めのトークンだけをidentとして返す
@@ -107,7 +105,7 @@ func (p *parser) parseIdent(tokens []lexer.Token, prevToken lexer.Token) (*Value
 	}, len(result)
 }
 
-func (p *parser) parseBracket(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseBracket(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		result   []interface{}
 		startCnt int
@@ -135,7 +133,7 @@ func (p *parser) parseBracket(tokens []lexer.Token, prevToken lexer.Token) (*Val
 	}, len(result)
 }
 
-func (p *parser) parseBrace(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseBrace(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		result   []interface{}
 		startCnt int
@@ -166,7 +164,7 @@ LOOP:
 
 // 初めのバリューは構造体に持たせる
 // switch のところを共通化して、それぞれのパースファンクションで呼ぶようにする
-func (p *parser) parseFunction(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseFunction(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		result      []interface{}
 		idx         int
@@ -193,7 +191,7 @@ LOOP:
 			result = append(result, token)
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
-			v, len := p.parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
 			result = append(result, v)
 			idx += len
 		default:
@@ -211,7 +209,7 @@ LOOP:
 	}, (idx + 1)
 }
 
-func (p *parser) parseCase(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseCase(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		result    []interface{}
 		idx       int
@@ -235,7 +233,7 @@ LOOP:
 			result = append(result, token)
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
-			v, len := p.parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
 			result = append(result, v)
 			idx += len
 		default:
@@ -253,7 +251,7 @@ LOOP:
 	}, (idx + 1)
 }
 
-func (p *parser) parseTypeCast(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseTypeCast(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		result      []interface{}
 		idx         int
@@ -279,7 +277,7 @@ LOOP:
 			result = append(result, token)
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
-			v, len := p.parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
 			result = append(result, v)
 			idx += len
 		default:
@@ -297,7 +295,7 @@ LOOP:
 	}, (idx + 1)
 }
 
-func (p *parser) parseParenthesis(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseParenthesis(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		result         []interface{}
 		idx            int
@@ -321,7 +319,7 @@ LOOP:
 			result = append(result, token)
 			break LOOP
 		case lexer.FUNCTION, lexer.TYPE, lexer.STARTPARENTHESIS, lexer.CASE:
-			v, len := p.parseNestedValue(token, tokens[idx:], tokens[idx-1])
+			v, len := parseNestedValue(token, tokens[idx:], tokens[idx-1])
 			result = append(result, v)
 			idx += len
 		default:
@@ -341,7 +339,7 @@ LOOP:
 
 // スイッチケースの共通化を行うため
 // 他のケーすをどう扱うかは今からっか
-func (p *parser) parseNestedValue(token lexer.Token, tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+func parseNestedValue(token lexer.Token, tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
 	var (
 		v   *Value
 		len int
@@ -349,13 +347,13 @@ func (p *parser) parseNestedValue(token lexer.Token, tokens []lexer.Token, prevT
 
 	switch token.Type {
 	case lexer.FUNCTION:
-		v, len = p.parseFunction(tokens, prevToken)
+		v, len = parseFunction(tokens, prevToken)
 	case lexer.TYPE:
-		v, len = p.parseTypeCast(tokens, prevToken)
+		v, len = parseTypeCast(tokens, prevToken)
 	case lexer.STARTPARENTHESIS:
-		v, len = p.parseParenthesis(tokens, prevToken)
+		v, len = parseParenthesis(tokens, prevToken)
 	case lexer.CASE:
-		v, len = p.parseCase(tokens, prevToken)
+		v, len = parseCase(tokens, prevToken)
 	}
 	return v, len
 }
