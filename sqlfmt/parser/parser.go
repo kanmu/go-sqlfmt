@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
@@ -11,6 +13,12 @@ import (
 func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
 	if !isSQL(tokens[0].Type) {
 		return nil, errors.New("can not parse no sql statement")
+	}
+
+	// testing parse values
+	values := parseValues(tokens)
+	for _, v := range values {
+		fmt.Printf("%#v\n", v)
 	}
 
 	var (

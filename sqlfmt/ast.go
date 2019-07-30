@@ -57,11 +57,19 @@ func replace(node *ast.BasicLit, options *Options) error {
 		return errors.Wrap(err, "format failed")
 	}
 
+	// TODO: i will delete this getStmtWithDistance later, so that i don't have to do things below
+	// i put new line before the last backquote because format.Source ("go/format") does not work without new line somehow ...
+	if options.Distance == 0 {
+		node.Value = "`" + res + "\n`"
+		return nil
+	}
+
 	result := getStmtWithDistance(res, options.Distance)
 
 	// FIXME: more elegant
 	// this is for the backquote appearing after SQL statements
 	node.Value = "`" + result + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
+	fmt.Println(node.Value)
 
 	return nil
 }
