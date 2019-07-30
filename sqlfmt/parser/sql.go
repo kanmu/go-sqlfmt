@@ -33,6 +33,7 @@ const (
 	TYPECASTEXPR = "type_cast_expr"
 	CASEEXPR     = "case_expr"
 	IDENT        = "ident"
+	JOINSTART    = "join_start"
 )
 
 func parseValues(tokens []lexer.Token) []*Value {
@@ -45,7 +46,7 @@ LOOP:
 	for {
 		token := tokens[idx]
 
-		// first value such as SELECT, INSERT, LOCK is parsed as FIRSTVALUE for convenience
+		// first token such as SELECT, INSERT, LOCK is parsed as FIRSTVALUE for convenience
 		if idx == 0 {
 			values = append(values, &Value{
 				name:   FIRSTVALUE,
@@ -79,6 +80,10 @@ LOOP:
 			idx += len
 		case lexer.STARTPARENTHESIS:
 			v, len := parseBracket(tokens[idx:], tokens[idx-1])
+			values = append(values, v)
+			idx += len
+		case lexer.JOIN, lexer.LEFT, lexer.RIGHT, lexer.OUTER, lexer.INNER, lexer.CROSS:
+			v, len := parseJoinStart(tokens[idx:], tokens[idx-1])
 			values = append(values, v)
 			idx += len
 		default:
@@ -360,4 +365,20 @@ func parseNestedValue(token lexer.Token, tokens []lexer.Token, prevToken lexer.T
 		v, len = parseCase(tokens, prevToken)
 	}
 	return v, len
+}
+
+// parseJoinStart parse start part of JOIN clause such as "LEFT OUTER JOIN"
+func parseJoinStart(tokens []lexer.Token, prevToken lexer.Token) (*Value, int) {
+	var values []interface{}
+	for _, token := range tokens {
+		if !token.IsJoinStart() {
+			break
+		}
+		values = append(values, token)
+	}
+	return &Value{
+		name:          JOINSTART,
+		values:        values,
+		prevTokenType: prevToken.Type,
+	}, len(values)
 }
