@@ -24,6 +24,39 @@ func format(src string) (string, error) {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
+	/*
+		sql, err := parse(tokens)
+		if err != nil {
+			return err
+		}
+
+
+		buf := &bytes.Buffer{}
+		if err := write(buf, sql); err != nil {
+			return err
+		}
+
+
+		or
+
+		printer := &printer{
+			buf: &bytes.Buffer{},
+			options: options,
+		}
+
+		if err := printer.print(sql); err != nil {
+			return err
+		}
+		if compare(printer.buf.String(), sr
+
+		if !compare(src, buf.String()) {
+			return err
+		}
+
+		return buf.String()
+
+	*/
+
 	res, err := getFormattedStmt(rs)
 	if err != nil {
 		return src, errors.Wrap(err, "getFormattedStmt failed")
