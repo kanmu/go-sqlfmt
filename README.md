@@ -109,7 +109,7 @@ run git clone and go build -o sqlfmt
                 If a file's formatting is different from src, overwrite it
                 with gofmt style.
   -distance     
-                Write the distane from the edge to the begin of SQL statements
+                Write the distance from the edge to the begin of SQL statements
 ```
 
 ## Limitations
