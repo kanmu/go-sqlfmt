@@ -8,188 +8,117 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Tokenizer tokenizes SQL statements
-type Tokenizer struct {
-	r      *bufio.Reader
-	w      *bytes.Buffer // w  writes token value. It resets its value when the end of token appears
-	result []Token
+type tokenizer struct {
+	r *bufio.Reader
 }
 
-// rune that can't be contained in SQL statement
-// TODO: I have to make better solution of making rune of eof in stead of using '∂'
-var eof = '∂'
-
-// value of literal
-const (
-	Comma            = ","
-	StartParenthesis = "("
-	EndParenthesis   = ")"
-	StartBracket     = "["
-	EndBracket       = "]"
-	StartBrace       = "{"
-	EndBrace         = "}"
-	SingleQuote      = "'"
-	NewLine          = "\n"
-)
-
-// NewTokenizer creates Tokenizer
-func NewTokenizer(src string) *Tokenizer {
-	return &Tokenizer{
+// Tokenize tokenize src to Token, ignorig white-space, new-line and tab
+func Tokenize(src string) ([]Token, error) {
+	t := &tokenizer{
 		r: bufio.NewReader(strings.NewReader(src)),
-		w: &bytes.Buffer{},
 	}
-}
 
-// GetTokens returns tokens for parsing
-func (t *Tokenizer) GetTokens() ([]Token, error) {
-	var result []Token
-
-	tokens, err := t.Tokenize()
+	tokens, err := t.tokenize()
 	if err != nil {
-		return nil, errors.Wrap(err, "Tokenize failed")
+		return nil, errors.Wrap(err, "failed to tokenize")
 	}
-	// replace all tokens without whitespaces and new lines
-	// if "AND" or "OR" appears after new line, token value will be ANDGROUP, ORGROUP
-	for i, tok := range tokens {
-		if tok.Type == AND && tokens[i-1].Type == NEWLINE {
-			andGroupToken := Token{Type: ANDGROUP, Value: tok.Value}
-			result = append(result, andGroupToken)
-			continue
-		}
-		if tok.Type == OR && tokens[i-1].Type == NEWLINE {
-			orGroupToken := Token{Type: ORGROUP, Value: tok.Value}
-			result = append(result, orGroupToken)
-			continue
-		}
-		if tok.Type == WS || tok.Type == NEWLINE {
-			continue
-		}
-		result = append(result, tok)
-	}
-	return result, nil
+
+	return tokens, nil
 }
 
-// Tokenize analyses every rune in SQL statement
-// every token is identified when whitespace appears
-func (t *Tokenizer) Tokenize() ([]Token, error) {
+// tokenize tokenize the source
+func (t *tokenizer) tokenize() ([]Token, error) {
+	var tokens []Token
 	for {
-		isEOF, err := t.scan()
-
-		if isEOF {
-			break
-		}
+		token, err := t.scanIgnoreSpace()
 		if err != nil {
 			return nil, err
 		}
+
+		tokens = append(tokens, token)
+		if token.Type == EOF {
+			return tokens, nil
+		}
 	}
-	return t.result, nil
 }
 
 // unread undoes t.r.readRune method to get last character
-func (t *Tokenizer) unread() { t.r.UnreadRune() }
-
-func isWhiteSpace(ch rune) bool {
-	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '　'
+func (t *tokenizer) unread() error {
+	if err := t.r.UnreadRune(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func isComma(ch rune) bool {
-	return ch == ','
-}
-
-func isStartParenthesis(ch rune) bool {
-	return ch == '('
-}
-
-func isEndParenthesis(ch rune) bool {
-	return ch == ')'
-}
-
-func isSingleQuote(ch rune) bool {
-	return ch == '\''
-}
-
-func isStartBracket(ch rune) bool {
-	return ch == '['
-}
-
-func isEndBracket(ch rune) bool {
-	return ch == ']'
-}
-
-func isStartBrace(ch rune) bool {
-	return ch == '{'
-}
-
-func isEndBrace(ch rune) bool {
-	return ch == '}'
-}
-
-// scan scans each character and appends to result until "eof" appears
-// when it finishes scanning all characters, it returns true
-func (t *Tokenizer) scan() (bool, error) {
+// scan reads the first charactor of t.r and creates Token
+func (t *tokenizer) scanIgnoreSpace() (Token, error) {
 	ch, _, err := t.r.ReadRune()
+	// create EOF Token if end of file
 	if err != nil {
 		if err.Error() == "EOF" {
-			ch = eof
-		} else {
-			return false, errors.Wrap(err, "read rune failed")
+			return Token{Type: EOF, Value: "EOF"}, nil
+		}
+		return Token{}, err
+	}
+
+	// read until end of space
+	if isSpace(ch) {
+		if err := t.readUntilIdent(); err != nil {
+			return Token{}, err
 		}
 	}
 
+	// create punctuation Token if ch represents some punctuation
+	if isPunctuation(ch) {
+		token := createPunctuationToken(ch)
+		return token, nil
+	}
+
+	var buf bytes.Buffer
 	switch {
-	case ch == eof:
-		tok := Token{Type: EOF, Value: "EOF"}
-		t.result = append(t.result, tok)
-		return true, nil
-	case isWhiteSpace(ch):
-		if err := t.scanWhiteSpace(); err != nil {
-			return false, err
-		}
-		return false, nil
-	// extract string
+	// scan string surrounded by single quote
 	case isSingleQuote(ch):
-		if err := t.scanString(); err != nil {
-			return false, err
+		token, err := t.scanString(&buf)
+		if err != nil {
+			return Token{}, err
 		}
-		return false, nil
-	case isComma(ch):
-		token := Token{Type: COMMA, Value: Comma}
-		t.result = append(t.result, token)
-		return false, nil
-	case isStartParenthesis(ch):
-		token := Token{Type: STARTPARENTHESIS, Value: StartParenthesis}
-		t.result = append(t.result, token)
-		return false, nil
-	case isEndParenthesis(ch):
-		token := Token{Type: ENDPARENTHESIS, Value: EndParenthesis}
-		t.result = append(t.result, token)
-		return false, nil
-	case isStartBracket(ch):
-		token := Token{Type: STARTBRACKET, Value: StartBracket}
-		t.result = append(t.result, token)
-		return false, nil
-	case isEndBracket(ch):
-		token := Token{Type: ENDBRACKET, Value: EndBracket}
-		t.result = append(t.result, token)
-		return false, nil
-	case isStartBrace(ch):
-		token := Token{Type: STARTBRACE, Value: StartBrace}
-		t.result = append(t.result, token)
-		return false, nil
-	case isEndBrace(ch):
-		token := Token{Type: ENDBRACE, Value: EndBrace}
-		t.result = append(t.result, token)
-		return false, nil
+		return token, nil
 	default:
-		if err := t.scanIdent(); err != nil {
-			return false, err
+		token, err := t.scanIdent(&buf)
+		if err != nil {
+			return Token{}, err
 		}
-		return false, nil
+		return token, err
 	}
 }
 
-func (t *Tokenizer) scanWhiteSpace() error {
-	t.unread()
+func (t *tokenizer) readUntilIdent() error {
+	for {
+		ch, _, err := t.r.ReadRune()
+		if err != nil {
+			if err.Error() == "EOF" {
+				return nil
+			}
+			return err
+		}
+		if !isSpace(ch) {
+			// to scan the first charactor of next token
+			t.unread()
+			return nil
+		}
+	}
+}
+
+// scanString scans values surrounded by singleQuote such as 'xxxxxxxx'
+// scanString writes rune of singleQuote to buf until the last single quote appears
+func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
+	// read and write the first charactor before scanning so that it can ignore the first single quote and read until the last single-quote appears
+	// TODO: more elegant way to scan string in the SQL
+	sq, _, err := t.r.ReadRune()
+	if err != nil {
+		return Token{}, err
+	}
+	buf.WriteRune(sq)
 
 	for {
 		ch, _, err := t.r.ReadRune()
@@ -197,204 +126,109 @@ func (t *Tokenizer) scanWhiteSpace() error {
 			if err.Error() == "EOF" {
 				break
 			} else {
-				return err
+				return Token{}, err
 			}
 		}
-		if !isWhiteSpace(ch) {
-			t.unread()
+
+		buf.WriteRune(ch)
+		if isSingleQuote(ch) {
 			break
-		} else {
-			t.w.WriteRune(ch)
 		}
 	}
-
-	if strings.Contains(t.w.String(), "\n") {
-		tok := Token{Type: NEWLINE, Value: "\n"}
-		t.result = append(t.result, tok)
-	} else {
-		tok := Token{Type: WS, Value: t.w.String()}
-		t.result = append(t.result, tok)
-	}
-	t.w.Reset()
-	return nil
+	return Token{Type: STRING, Value: buf.String()}, nil
 }
 
-// scan string token including single quotes
-func (t *Tokenizer) scanString() error {
-	var counter int
-	t.unread()
-
+// append all ch to result until ch is a white-space, new-line or punctuation
+// if ident is SQL keyword, it returns Token of the keyword
+func (t *tokenizer) scanIdent(buf *bytes.Buffer) (Token, error) {
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
 			if err.Error() == "EOF" {
 				break
 			} else {
-				return err
+				return Token{}, err
 			}
 		}
-		// ignore the first single quote
-		if counter != 0 && isSingleQuote(ch) {
-			t.w.WriteRune(ch)
-			break
-		} else {
-			t.w.WriteRune(ch)
-		}
-		counter++
-	}
-	tok := Token{Type: STRING, Value: t.w.String()}
-	t.result = append(t.result, tok)
-	t.w.Reset()
-	return nil
-}
-
-// append all ch to result until ch is a white space
-// if ident is keyword, Type will be the keyword and value will be the uppercase keyword
-func (t *Tokenizer) scanIdent() error {
-	t.unread()
-
-	for {
-		ch, _, err := t.r.ReadRune()
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			} else {
-				return err
-			}
-		}
-		if isWhiteSpace(ch) {
-			t.unread()
-			break
-		} else if isComma(ch) {
-			t.unread()
-			break
-		} else if isStartParenthesis(ch) {
-			t.unread()
-			break
-		} else if isEndParenthesis(ch) {
-			t.unread()
-			break
-		} else if isSingleQuote(ch) {
-			t.unread()
-			break
-		} else if isStartBracket(ch) {
-			t.unread()
-			break
-		} else if isEndBracket(ch) {
-			t.unread()
-			break
-		} else if isStartBrace(ch) {
-			t.unread()
-			break
-		} else if isEndBrace(ch) {
+		if isPunctuation(ch) || isSpace(ch) {
 			t.unread()
 			break
 		} else {
-			t.w.WriteRune(ch)
+			buf.WriteRune(ch)
 		}
 	}
-	t.append(t.w.String())
-	return nil
-}
 
-func (t *Tokenizer) append(v string) {
-	upperValue := strings.ToUpper(v)
-
-	if ttype, ok := t.isSQLKeyWord(upperValue); ok {
-		t.result = append(t.result, Token{
-			Type:  ttype,
-			Value: upperValue,
-		})
-	} else {
-		t.result = append(t.result, Token{
-			Type:  ttype,
-			Value: v,
-		})
+	upperValue := strings.ToUpper(buf.String())
+	if ttype, ok := sqlKeywordMap[upperValue]; ok {
+		return Token{Type: ttype, Value: upperValue}, nil
 	}
-	t.w.Reset()
-}
-
-func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
-	if ttype, ok := sqlKeywordMap[v]; ok {
-		return ttype, ok
-	} else if ttype, ok := typeWithParenMap[v]; ok {
-		if r, _, err := t.r.ReadRune(); err == nil && string(r) == StartParenthesis {
-			t.unread()
-			return ttype, ok
-		}
-		t.unread()
-		return IDENT, ok
-	}
-	return IDENT, false
+	return Token{Type: IDENT, Value: buf.String()}, nil
 }
 
 var sqlKeywordMap = map[string]TokenType{
-	"SELECT":      SELECT,
-	"FROM":        FROM,
-	"WHERE":       WHERE,
-	"CASE":        CASE,
-	"ORDER":       ORDER,
-	"BY":          BY,
-	"AS":          AS,
-	"JOIN":        JOIN,
-	"LEFT":        LEFT,
-	"RIGHT":       RIGHT,
-	"INNER":       INNER,
-	"OUTER":       OUTER,
-	"ON":          ON,
-	"WHEN":        WHEN,
-	"END":         END,
-	"GROUP":       GROUP,
-	"DESC":        DESC,
-	"ASC":         ASC,
-	"LIMIT":       LIMIT,
-	"AND":         AND,
-	"OR":          OR,
-	"IN":          IN,
-	"IS":          IS,
-	"NOT":         NOT,
-	"NULL":        NULL,
-	"DISTINCT":    DISTINCT,
-	"LIKE":        LIKE,
-	"BETWEEN":     BETWEEN,
-	"UNION":       UNION,
-	"ALL":         ALL,
-	"HAVING":      HAVING,
-	"EXISTS":      EXISTS,
-	"UPDATE":      UPDATE,
-	"SET":         SET,
-	"RETURNING":   RETURNING,
-	"DELETE":      DELETE,
-	"INSERT":      INSERT,
-	"INTO":        INTO,
-	"DO":          DO,
-	"VALUES":      VALUES,
-	"FOR":         FOR,
-	"THEN":        THEN,
-	"ELSE":        ELSE,
-	"DISTINCTROW": DISTINCTROW,
-	"FILTER":      FILTER,
-	"WITHIN":      WITHIN,
-	"COLLATE":     COLLATE,
-	"INTERSECT":   INTERSECT,
-	"EXCEPT":      EXCEPT,
-	"OFFSET":      OFFSET,
-	"FETCH":       FETCH,
-	"FIRST":       FIRST,
-	"ROWS":        ROWS,
-	"USING":       USING,
-	"OVERLAPS":    OVERLAPS,
-	"NATURAL":     NATURAL,
-	"CROSS":       CROSS,
-	"ZONE":        ZONE,
-	"NULLS":       NULLS,
-	"LAST":        LAST,
-	"AT":          AT,
-	"LOCK":        LOCK,
-	"WITH":        WITH,
-}
-
-var typeWithParenMap = map[string]TokenType{
+	"SELECT":          SELECT,
+	"FROM":            FROM,
+	"WHERE":           WHERE,
+	"CASE":            CASE,
+	"ORDER":           ORDER,
+	"BY":              BY,
+	"AS":              AS,
+	"JOIN":            JOIN,
+	"LEFT":            LEFT,
+	"RIGHT":           RIGHT,
+	"INNER":           INNER,
+	"OUTER":           OUTER,
+	"ON":              ON,
+	"WHEN":            WHEN,
+	"END":             END,
+	"GROUP":           GROUP,
+	"DESC":            DESC,
+	"ASC":             ASC,
+	"LIMIT":           LIMIT,
+	"AND":             AND,
+	"OR":              OR,
+	"IN":              IN,
+	"IS":              IS,
+	"NOT":             NOT,
+	"NULL":            NULL,
+	"DISTINCT":        DISTINCT,
+	"LIKE":            LIKE,
+	"BETWEEN":         BETWEEN,
+	"UNION":           UNION,
+	"ALL":             ALL,
+	"HAVING":          HAVING,
+	"EXISTS":          EXISTS,
+	"UPDATE":          UPDATE,
+	"SET":             SET,
+	"RETURNING":       RETURNING,
+	"DELETE":          DELETE,
+	"INSERT":          INSERT,
+	"INTO":            INTO,
+	"DO":              DO,
+	"VALUES":          VALUES,
+	"FOR":             FOR,
+	"THEN":            THEN,
+	"ELSE":            ELSE,
+	"DISTINCTROW":     DISTINCTROW,
+	"FILTER":          FILTER,
+	"WITHIN":          WITHIN,
+	"COLLATE":         COLLATE,
+	"INTERSECT":       INTERSECT,
+	"EXCEPT":          EXCEPT,
+	"OFFSET":          OFFSET,
+	"FETCH":           FETCH,
+	"FIRST":           FIRST,
+	"ROWS":            ROWS,
+	"USING":           USING,
+	"OVERLAPS":        OVERLAPS,
+	"NATURAL":         NATURAL,
+	"CROSS":           CROSS,
+	"ZONE":            ZONE,
+	"NULLS":           NULLS,
+	"LAST":            LAST,
+	"AT":              AT,
+	"LOCK":            LOCK,
+	"WITH":            WITH,
 	"SUM":             FUNCTION,
 	"AVG":             FUNCTION,
 	"MAX":             FUNCTION,
@@ -437,4 +271,76 @@ var typeWithParenMap = map[string]TokenType{
 	"TIME":            TYPE,
 	"SECOND":          TYPE,
 	"INTERVAL":        TYPE,
+}
+
+func isWhiteSpace(ch rune) bool {
+	return ch == ' ' || ch == '　'
+}
+
+func isTab(ch rune) bool {
+	return ch == '\t'
+}
+
+func isNewLine(ch rune) bool {
+	return ch == '\n'
+}
+
+func isSpace(ch rune) bool {
+	return isWhiteSpace(ch) || isNewLine(ch) || isTab(ch)
+}
+
+func isComma(ch rune) bool {
+	return ch == ','
+}
+
+func isStartParenthesis(ch rune) bool {
+	return ch == '('
+}
+
+func isEndParenthesis(ch rune) bool {
+	return ch == ')'
+}
+
+func isSingleQuote(ch rune) bool {
+	return ch == '\''
+}
+
+func isStartBracket(ch rune) bool {
+	return ch == '['
+}
+
+func isEndBracket(ch rune) bool {
+	return ch == ']'
+}
+
+func isStartBrace(ch rune) bool {
+	return ch == '{'
+}
+
+func isEndBrace(ch rune) bool {
+	return ch == '}'
+}
+
+func isPunctuation(ch rune) bool {
+	return isStartParenthesis(ch) || isEndParenthesis(ch) || isStartBracket(ch) || isEndBracket(ch) || isStartBrace(ch) || isEndBrace(ch) || isComma(ch) || isSingleQuote(ch)
+}
+
+func createPunctuationToken(ch rune) Token {
+	switch {
+	case isComma(ch):
+		return Token{Type: COMMA, Value: string(ch)}
+	case isStartParenthesis(ch):
+		return Token{Type: STARTPARENTHESIS, Value: string(ch)}
+	case isEndParenthesis(ch):
+		return Token{Type: ENDPARENTHESIS, Value: string(ch)}
+	case isStartBracket(ch):
+		return Token{Type: STARTBRACKET, Value: string(ch)}
+	case isEndBracket(ch):
+		return Token{Type: ENDBRACKET, Value: string(ch)}
+	case isStartBrace(ch):
+		return Token{Type: STARTBRACE, Value: string(ch)}
+	case isEndBrace(ch):
+		return Token{Type: ENDBRACE, Value: string(ch)}
+	}
+	return Token{}
 }
