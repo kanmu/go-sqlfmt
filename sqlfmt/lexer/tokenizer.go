@@ -3,6 +3,7 @@ package lexer
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -12,7 +13,8 @@ type tokenizer struct {
 	r *bufio.Reader
 }
 
-// Tokenize tokenize src to Token, ignorig white-space, new-line and tab
+// Tokenize tokenize src and returns slice of Token
+// It ignores Token of white-space, new-line and tab
 func Tokenize(src string) ([]Token, error) {
 	t := &tokenizer{
 		r: bufio.NewReader(strings.NewReader(src)),
@@ -26,16 +28,20 @@ func Tokenize(src string) ([]Token, error) {
 	return tokens, nil
 }
 
-// tokenize tokenize the source
+// scan until END OF FILE
 func (t *tokenizer) tokenize() ([]Token, error) {
 	var tokens []Token
 	for {
-		token, err := t.scanIgnoreSpace()
+		token, err := t.scan()
 		if err != nil {
 			return nil, err
 		}
 
-		tokens = append(tokens, token)
+		// ignorig space (white-space, new-line and tab)
+		// go-sqlfmt formats src consistent with any space forcibly so far, but should I make a option to choose whether to ignore space..?
+		if !(token.Type == SPACE) {
+			tokens = append(tokens, token)
+		}
 		if token.Type == EOF {
 			return tokens, nil
 		}
@@ -50,10 +56,23 @@ func (t *tokenizer) unread() error {
 	return nil
 }
 
-// scan reads the first charactor of t.r and creates Token
-func (t *tokenizer) scanIgnoreSpace() (Token, error) {
+// firstCharactor returns the first charactor of t.r without reading t.r
+func (t *tokenizer) firstCharactor() (rune, error) {
 	ch, _, err := t.r.ReadRune()
-	// create EOF Token if end of file
+	if err != nil {
+		return ch, err
+	}
+
+	// unread one charactor consumed already
+	t.unread()
+	return ch, nil
+}
+
+// scan reads the first charactor of t.r and creates Token
+func (t *tokenizer) scan() (Token, error) {
+	ch, err := t.firstCharactor()
+
+	// create EOF Token if END OF FILE
 	if err != nil {
 		if err.Error() == "EOF" {
 			return Token{Type: EOF, Value: "EOF"}, nil
@@ -61,22 +80,21 @@ func (t *tokenizer) scanIgnoreSpace() (Token, error) {
 		return Token{}, err
 	}
 
-	// read until end of space
-	if isSpace(ch) {
-		if err := t.readUntilIdent(); err != nil {
-			return Token{}, err
-		}
-	}
-
-	// create punctuation Token if ch represents some punctuation
-	if isPunctuation(ch) {
-		token := createPunctuationToken(ch)
-		return token, nil
-	}
-
 	var buf bytes.Buffer
 	switch {
-	// scan string surrounded by single quote
+	case isSpace(ch):
+		token, err := t.scanSpace(&buf)
+		if err != nil {
+			return Token{}, err
+		}
+		return token, nil
+	case isPunctuation(ch):
+		token, err := t.scanPunctuation(&buf)
+		if err != nil {
+			return Token{}, err
+		}
+		return token, nil
+	// scan string surrounded by single quote such as 'xxxxxxxx'
 	case isSingleQuote(ch):
 		token, err := t.scanString(&buf)
 		if err != nil {
@@ -92,25 +110,64 @@ func (t *tokenizer) scanIgnoreSpace() (Token, error) {
 	}
 }
 
-func (t *tokenizer) readUntilIdent() error {
+// create token of space
+func (t *tokenizer) scanSpace(buf *bytes.Buffer) (Token, error) {
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
 			if err.Error() == "EOF" {
-				return nil
+				break
+			} else {
+				return Token{}, err
 			}
-			return err
 		}
 		if !isSpace(ch) {
-			// to scan the first charactor of next token
 			t.unread()
-			return nil
+			break
+		} else {
+			buf.WriteRune(ch)
 		}
 	}
+
+	return Token{Type: SPACE, Value: buf.String()}, nil
 }
 
-// scanString scans values surrounded by singleQuote such as 'xxxxxxxx'
-// scanString writes rune of singleQuote to buf until the last single quote appears
+// create token of punctuation
+func (t *tokenizer) scanPunctuation(buf *bytes.Buffer) (Token, error) {
+	// token of punctuation is consisted of one charactor, so it reads t.r once except DOUBLECOLON token
+	ch, _, err := t.r.ReadRune()
+	if err != nil {
+		return Token{}, err
+	}
+	buf.WriteRune(ch)
+
+	// create token of colon or double-colon
+	// TODO: more elegant
+	if isColon(ch) {
+		nextCh, _, err := t.r.ReadRune()
+		if err != nil {
+			return Token{}, err
+		}
+		// double-colon
+		if isColon(nextCh) {
+			return Token{Type: DOUBLECOLON, Value: fmt.Sprintf("%s%s", string(ch), string(nextCh))}, nil
+		} else {
+			// it already read the charactor of next token when colon does not appear twice
+			// t.unread() makes it possible for caller function to scan next charactor that consumed already
+			t.unread()
+			return Token{Type: COLON, Value: string(ch)}, nil
+		}
+	}
+
+	if ttype, ok := punctuationMap[buf.String()]; ok {
+		return Token{Type: ttype, Value: buf.String()}, nil
+	}
+
+	return Token{}, fmt.Errorf("unexpected value: %v", buf.String())
+}
+
+// create token of string
+// scan value surrounded with single-quote and return STRING token
 func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
 	// read and write the first charactor before scanning so that it can ignore the first single quote and read until the last single-quote appears
 	// TODO: more elegant way to scan string in the SQL
@@ -120,6 +177,7 @@ func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
 	}
 	buf.WriteRune(sq)
 
+	// read until next single-quote appears
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
@@ -135,9 +193,11 @@ func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
 			break
 		}
 	}
+
 	return Token{Type: STRING, Value: buf.String()}, nil
 }
 
+// create token of iden
 // append all ch to result until ch is a white-space, new-line or punctuation
 // if ident is SQL keyword, it returns Token of the keyword
 func (t *tokenizer) scanIdent(buf *bytes.Buffer) (Token, error) {
@@ -150,7 +210,7 @@ func (t *tokenizer) scanIdent(buf *bytes.Buffer) (Token, error) {
 				return Token{}, err
 			}
 		}
-		if isPunctuation(ch) || isSpace(ch) {
+		if isPunctuation(ch) || isSpace(ch) || isSingleQuote(ch) {
 			t.unread()
 			break
 		} else {
@@ -159,13 +219,14 @@ func (t *tokenizer) scanIdent(buf *bytes.Buffer) (Token, error) {
 	}
 
 	upperValue := strings.ToUpper(buf.String())
-	if ttype, ok := sqlKeywordMap[upperValue]; ok {
+	if ttype, ok := keywordMap[upperValue]; ok {
 		return Token{Type: ttype, Value: upperValue}, nil
 	}
+
 	return Token{Type: IDENT, Value: buf.String()}, nil
 }
 
-var sqlKeywordMap = map[string]TokenType{
+var keywordMap = map[string]TokenType{
 	"SELECT":          SELECT,
 	"FROM":            FROM,
 	"WHERE":           WHERE,
@@ -273,6 +334,16 @@ var sqlKeywordMap = map[string]TokenType{
 	"INTERVAL":        TYPE,
 }
 
+var punctuationMap = map[string]TokenType{
+	"(": STARTPARENTHESIS,
+	")": ENDPARENTHESIS,
+	"[": STARTBRACKET,
+	"]": ENDBRACKET,
+	"{": STARTBRACE,
+	"}": ENDBRACKET,
+	",": COMMA,
+}
+
 func isWhiteSpace(ch rune) bool {
 	return ch == ' ' || ch == '　'
 }
@@ -321,26 +392,10 @@ func isEndBrace(ch rune) bool {
 	return ch == '}'
 }
 
-func isPunctuation(ch rune) bool {
-	return isStartParenthesis(ch) || isEndParenthesis(ch) || isStartBracket(ch) || isEndBracket(ch) || isStartBrace(ch) || isEndBrace(ch) || isComma(ch) || isSingleQuote(ch)
+func isColon(ch rune) bool {
+	return ch == ':'
 }
 
-func createPunctuationToken(ch rune) Token {
-	switch {
-	case isComma(ch):
-		return Token{Type: COMMA, Value: string(ch)}
-	case isStartParenthesis(ch):
-		return Token{Type: STARTPARENTHESIS, Value: string(ch)}
-	case isEndParenthesis(ch):
-		return Token{Type: ENDPARENTHESIS, Value: string(ch)}
-	case isStartBracket(ch):
-		return Token{Type: STARTBRACKET, Value: string(ch)}
-	case isEndBracket(ch):
-		return Token{Type: ENDBRACKET, Value: string(ch)}
-	case isStartBrace(ch):
-		return Token{Type: STARTBRACE, Value: string(ch)}
-	case isEndBrace(ch):
-		return Token{Type: ENDBRACE, Value: string(ch)}
-	}
-	return Token{}
+func isPunctuation(ch rune) bool {
+	return isStartParenthesis(ch) || isEndParenthesis(ch) || isStartBracket(ch) || isEndBracket(ch) || isStartBrace(ch) || isEndBrace(ch) || isComma(ch) || isColon(ch)
 }
