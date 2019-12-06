@@ -51,7 +51,8 @@ func parseAndCheck(v string, ops *Options) (string, bool, error) {
 	}
 
 	// pass value without back-quote
-	src := trimBackquote(v)
+	src := strings.Trim(v, Backquote)
+
 	res, err := Format(src, ops)
 	if err != nil {
 		return res, false, err
@@ -76,10 +77,6 @@ func isSQLWithBackQuote(src string) bool {
 		return true
 	}
 	return false
-}
-
-func trimBackquote(src string) string {
-	return strings.Trim(src, Backquote)
 }
 
 func setBackquote(src string) string {
