@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	flag.IntVar(&options.Distance, "distance", 0, "write the distane from the edge to the begin of SQL statements")
+	flag.IntVar(&options.Distance, "distance", 0, "write the distance from the edge to the begin of SQL statements")
 }
 
 func usage() {
