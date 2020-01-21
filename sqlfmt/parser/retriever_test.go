@@ -9,23 +9,23 @@ import (
 
 func TestNewRetriever(t *testing.T) {
 	testingData := []lexer.Token{
-		lexer.Token{Type: lexer.SELECT, Value: "SELECT"},
-		lexer.Token{Type: lexer.IDENT, Value: "name"},
-		lexer.Token{Type: lexer.COMMA, Value: ","},
-		lexer.Token{Type: lexer.IDENT, Value: "age"},
-		lexer.Token{Type: lexer.FROM, Value: "FROM"},
-		lexer.Token{Type: lexer.IDENT, Value: "user"},
-		lexer.Token{Type: lexer.EOF, Value: "EOF"},
+		{Type: lexer.SELECT, Value: "SELECT"},
+		{Type: lexer.IDENT, Value: "name"},
+		{Type: lexer.COMMA, Value: ","},
+		{Type: lexer.IDENT, Value: "age"},
+		{Type: lexer.FROM, Value: "FROM"},
+		{Type: lexer.IDENT, Value: "user"},
+		{Type: lexer.EOF, Value: "EOF"},
 	}
 	r := NewRetriever(testingData)
 	want := []lexer.Token{
-		lexer.Token{Type: lexer.SELECT, Value: "SELECT"},
-		lexer.Token{Type: lexer.IDENT, Value: "name"},
-		lexer.Token{Type: lexer.COMMA, Value: ","},
-		lexer.Token{Type: lexer.IDENT, Value: "age"},
-		lexer.Token{Type: lexer.FROM, Value: "FROM"},
-		lexer.Token{Type: lexer.IDENT, Value: "user"},
-		lexer.Token{Type: lexer.EOF, Value: "EOF"},
+		{Type: lexer.SELECT, Value: "SELECT"},
+		{Type: lexer.IDENT, Value: "name"},
+		{Type: lexer.COMMA, Value: ","},
+		{Type: lexer.IDENT, Value: "age"},
+		{Type: lexer.FROM, Value: "FROM"},
+		{Type: lexer.IDENT, Value: "user"},
+		{Type: lexer.EOF, Value: "EOF"},
 	}
 	got := r.TokenSource
 
@@ -49,13 +49,13 @@ func TestRetrieve(t *testing.T) {
 		{
 			name: "normal_test",
 			source: []lexer.Token{
-				lexer.Token{Type: lexer.SELECT, Value: "SELECT"},
-				lexer.Token{Type: lexer.IDENT, Value: "name"},
-				lexer.Token{Type: lexer.COMMA, Value: ","},
-				lexer.Token{Type: lexer.IDENT, Value: "age"},
-				lexer.Token{Type: lexer.FROM, Value: "FROM"},
-				lexer.Token{Type: lexer.IDENT, Value: "user"},
-				lexer.Token{Type: lexer.EOF, Value: "EOF"},
+				{Type: lexer.SELECT, Value: "SELECT"},
+				{Type: lexer.IDENT, Value: "name"},
+				{Type: lexer.COMMA, Value: ","},
+				{Type: lexer.IDENT, Value: "age"},
+				{Type: lexer.FROM, Value: "FROM"},
+				{Type: lexer.IDENT, Value: "user"},
+				{Type: lexer.EOF, Value: "EOF"},
 			},
 			endTokenTypes: []lexer.TokenType{lexer.FROM},
 			want: &want{
@@ -66,14 +66,14 @@ func TestRetrieve(t *testing.T) {
 		{
 			name: "normal_test3",
 			source: []lexer.Token{
-				lexer.Token{Type: lexer.LEFT, Value: "LEFT"},
-				lexer.Token{Type: lexer.JOIN, Value: "JOIN"},
-				lexer.Token{Type: lexer.IDENT, Value: "xxx"},
-				lexer.Token{Type: lexer.ON, Value: "ON"},
-				lexer.Token{Type: lexer.IDENT, Value: "xxx"},
-				lexer.Token{Type: lexer.IDENT, Value: "="},
-				lexer.Token{Type: lexer.IDENT, Value: "xxx"},
-				lexer.Token{Type: lexer.WHERE, Value: "WHERE"},
+				{Type: lexer.LEFT, Value: "LEFT"},
+				{Type: lexer.JOIN, Value: "JOIN"},
+				{Type: lexer.IDENT, Value: "xxx"},
+				{Type: lexer.ON, Value: "ON"},
+				{Type: lexer.IDENT, Value: "xxx"},
+				{Type: lexer.IDENT, Value: "="},
+				{Type: lexer.IDENT, Value: "xxx"},
+				{Type: lexer.WHERE, Value: "WHERE"},
 			},
 			endTokenTypes: []lexer.TokenType{lexer.WHERE},
 			want: &want{
@@ -84,9 +84,9 @@ func TestRetrieve(t *testing.T) {
 		{
 			name: "normal_test4",
 			source: []lexer.Token{
-				lexer.Token{Type: lexer.UPDATE, Value: "UPDATE"},
-				lexer.Token{Type: lexer.IDENT, Value: "xxx"},
-				lexer.Token{Type: lexer.SET, Value: "SET"},
+				{Type: lexer.UPDATE, Value: "UPDATE"},
+				{Type: lexer.IDENT, Value: "xxx"},
+				{Type: lexer.SET, Value: "SET"},
 			},
 			endTokenTypes: []lexer.TokenType{lexer.SET},
 			want: &want{
@@ -97,10 +97,10 @@ func TestRetrieve(t *testing.T) {
 		{
 			name: "normal_test5",
 			source: []lexer.Token{
-				lexer.Token{Type: lexer.INSERT, Value: "INSERT"},
-				lexer.Token{Type: lexer.INTO, Value: "INTO"},
-				lexer.Token{Type: lexer.IDENT, Value: "xxx"},
-				lexer.Token{Type: lexer.VALUES, Value: "VALUES"},
+				{Type: lexer.INSERT, Value: "INSERT"},
+				{Type: lexer.INTO, Value: "INTO"},
+				{Type: lexer.IDENT, Value: "xxx"},
+				{Type: lexer.VALUES, Value: "VALUES"},
 			},
 			endTokenTypes: []lexer.TokenType{lexer.VALUES},
 			want: &want{
