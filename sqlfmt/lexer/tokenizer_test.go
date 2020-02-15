@@ -15,7 +15,7 @@ func TestTokenize(t *testing.T) {
 		{Type: COMMA, Value: ","},
 		{Type: IDENT, Value: "age"},
 		{Type: COMMA, Value: ","},
-		{Type: IDENT, Value: "SUM"},
+		{Type: FUNCTION, Value: "SUM"},
 		{Type: COMMA, Value: ","},
 		{Type: FUNCTION, Value: "SUM"},
 		{Type: STARTPARENTHESIS, Value: "("},

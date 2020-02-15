@@ -4,29 +4,6 @@ import (
 	"testing"
 )
 
-func TestCompare(t *testing.T) {
-	test := struct {
-		before string
-		after  string
-		want   bool
-	}{
-		before: "select * from xxx",
-		after:  "select\n  *\nFROM xxx",
-		want:   true,
-	}
-	if got := compare(test.before, test.after); got != test.want {
-		t.Errorf("want %v#v got %#v", test.want, got)
-	}
-}
-
-func TestRemove(t *testing.T) {
-	got := removeSpace("select xxx from xxx")
-	want := "selectxxxfromxxx"
-	if got != want {
-		t.Errorf("want %#v, got %#v", want, got)
-	}
-}
-
 func TestFormat(t *testing.T) {
 	for _, tt := range formatTestingData {
 		opt := &Options{}
