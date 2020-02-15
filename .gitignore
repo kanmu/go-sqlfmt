@@ -1,4 +1,8 @@
-*todo
-dummy.go 
+dummy.go
 vendor
 .DS_Store
+
+
+# for GoLand user
+.idea/**/workspace.xml
+.idea/**/tasks.xmlq
