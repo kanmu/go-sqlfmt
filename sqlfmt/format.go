@@ -4,12 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"strings"
-
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 // Format formats src in 3 steps
