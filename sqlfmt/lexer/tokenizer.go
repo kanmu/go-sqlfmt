@@ -97,7 +97,7 @@ func (t *tokenizer) scan() (Token, error) {
 			return Token{}, err
 		}
 		return token, nil
-	// scan string surrounded by single quote such as 'xxxxxxxx'
+	// scan string which appears in the SQL statement surrounded by single quote such as 'xxxxxxxx'
 	case isSingleQuote(ch):
 		token, err := t.scanString(&buf)
 		if err != nil {
@@ -145,7 +145,7 @@ func (t *tokenizer) scanPunctuation(buf *bytes.Buffer) (Token, error) {
 	buf.WriteRune(ch)
 
 	// create token of colon or double-colon
-	// TODO: more elegant
+	// FIXME: more elegant
 	if isColon(ch) {
 		nextCh, _, err := t.r.ReadRune()
 		if err != nil {
@@ -172,7 +172,7 @@ func (t *tokenizer) scanPunctuation(buf *bytes.Buffer) (Token, error) {
 // create token of string
 // scan value surrounded with single-quote and return STRING token
 func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
-	// read and write the first character before scanning,  so that it can ignore the first single quote and read until the last single-quote appears
+	// read and write the first character before scanning, so that it can ignore the first single quote and read until the last single-quote appears
 	// FIXME: more elegant way to scan string in the SQL
 	sq, _, err := t.r.ReadRune()
 	if err != nil {
