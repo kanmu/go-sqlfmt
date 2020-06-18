@@ -85,7 +85,7 @@ ORDER BY
 ## Installation
 
 ```bash
-run git clone and go build -o sqlfmt 
+go get github.com/kanmu/go-sqlfmt/cmd/sqlfmt
 ```
 ## Usage
 
