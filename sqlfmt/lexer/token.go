@@ -90,6 +90,9 @@ const (
 
 	QUOTEAREA
 	SURROUNDING
+	COLON
+	DOUBLECOLON
+	SPACE
 )
 
 // TokenType is an alias type that represents a kind of token

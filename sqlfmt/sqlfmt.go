@@ -28,6 +28,7 @@ func Process(filename string, src []byte, options *Options) ([]byte, error) {
 	Replace(f, options)
 
 	var buf bytes.Buffer
+
 	if err = printer.Fprint(&buf, fset, f); err != nil {
 		return nil, errors.Wrap(err, "printer.Fprint failed")
 	}

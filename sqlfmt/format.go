@@ -16,8 +16,7 @@ import (
 // 2: parse tokens by SQL clause group
 // 3: for each clause group (Reindenter), add indentation or new line in the correct position
 func Format(src string, options *Options) (string, error) {
-	t := lexer.NewTokenizer(src)
-	tokens, err := t.GetTokens()
+	tokens, err := lexer.Tokenize(src)
 	if err != nil {
 		return src, errors.Wrap(err, "Tokenize failed")
 	}
