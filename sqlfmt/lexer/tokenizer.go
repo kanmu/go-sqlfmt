@@ -37,7 +37,7 @@ func (t *tokenizer) tokenize() ([]Token, error) {
 			return nil, err
 		}
 
-		// ignorig space (white-space, new-line and tab)
+		// go-sqlfmt ignores any spaces (white-space, new-line and tab)
 		// go-sqlfmt formats src consistent with any space forcibly so far, but should I make a option to choose whether to ignore space..?
 		if !(token.Type == SPACE) {
 			tokens = append(tokens, token)
@@ -56,23 +56,26 @@ func (t *tokenizer) unread() error {
 	return nil
 }
 
-// firstCharactor returns the first charactor of t.r without reading t.r
-func (t *tokenizer) firstCharactor() (rune, error) {
+// firstCharacter returns the first character of t.r without reading t.r
+func (t *tokenizer) firstCharacter() (rune, error) {
 	ch, _, err := t.r.ReadRune()
 	if err != nil {
 		return ch, err
 	}
 
-	// unread one charactor consumed already
-	t.unread()
+	// unread already consumed character
+	if err = t.unread(); err != nil{
+		return ch, err
+	}
+
 	return ch, nil
 }
 
-// scan reads the first charactor of t.r and creates Token
+// scan reads the first character of t.r and creates Token
 func (t *tokenizer) scan() (Token, error) {
-	ch, err := t.firstCharactor()
+	ch, err := t.firstCharacter()
 
-	// create EOF Token if END OF FILE
+	// create EOF Token if it gets eof
 	if err != nil {
 		if err.Error() == "EOF" {
 			return Token{Type: EOF, Value: "EOF"}, nil
@@ -134,7 +137,7 @@ func (t *tokenizer) scanSpace(buf *bytes.Buffer) (Token, error) {
 
 // create token of punctuation
 func (t *tokenizer) scanPunctuation(buf *bytes.Buffer) (Token, error) {
-	// token of punctuation is consisted of one charactor, so it reads t.r once except DOUBLECOLON token
+	// token of punctuation is consisted of a character, so it reads t.r only once except DOUBLECOLON token
 	ch, _, err := t.r.ReadRune()
 	if err != nil {
 		return Token{}, err
@@ -148,12 +151,12 @@ func (t *tokenizer) scanPunctuation(buf *bytes.Buffer) (Token, error) {
 		if err != nil {
 			return Token{}, err
 		}
-		// double-colon
+		// in case double-colon appears
 		if isColon(nextCh) {
 			return Token{Type: DOUBLECOLON, Value: fmt.Sprintf("%s%s", string(ch), string(nextCh))}, nil
 		} else {
-			// it already read the charactor of next token when colon does not appear twice
-			// t.unread() makes it possible for caller function to scan next charactor that consumed already
+			// it already read the character of next token when colon does not appear twice
+			// t.unread() makes it possible for caller function to scan next character that consumed already
 			t.unread()
 			return Token{Type: COLON, Value: string(ch)}, nil
 		}
@@ -169,8 +172,8 @@ func (t *tokenizer) scanPunctuation(buf *bytes.Buffer) (Token, error) {
 // create token of string
 // scan value surrounded with single-quote and return STRING token
 func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
-	// read and write the first charactor before scanning so that it can ignore the first single quote and read until the last single-quote appears
-	// TODO: more elegant way to scan string in the SQL
+	// read and write the first character before scanning,  so that it can ignore the first single quote and read until the last single-quote appears
+	// FIXME: more elegant way to scan string in the SQL
 	sq, _, err := t.r.ReadRune()
 	if err != nil {
 		return Token{}, err
@@ -197,7 +200,7 @@ func (t *tokenizer) scanString(buf *bytes.Buffer) (Token, error) {
 	return Token{Type: STRING, Value: buf.String()}, nil
 }
 
-// create token of iden
+// create token of identifier
 // append all ch to result until ch is a white-space, new-line or punctuation
 // if ident is SQL keyword, it returns Token of the keyword
 func (t *tokenizer) scanIdent(buf *bytes.Buffer) (Token, error) {
