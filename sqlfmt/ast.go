@@ -12,11 +12,14 @@ func Replace(f *ast.File, options *Options) {
 	ast.Inspect(f, func(n ast.Node) bool {
 		sql, found := findSQL(n)
 		if found {
-			sql, err := Format(sql, options)
+			res, err := Format(sql, options)
 			if err != nil {
 				log.Println(err)
+
+				// XXX for debugging
+				log.Println(sql)
 			} else {
-				replace(n, sql)
+				replace(n, res)
 			}
 		}
 		return true

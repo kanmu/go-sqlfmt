@@ -11,10 +11,7 @@ import (
 	"strings"
 )
 
-// Format formats src in 3 steps
-// 1: tokenize src
-// 2: parse tokens by SQL clause group
-// 3: for each clause group (Reindenter), add indentation or new line in the correct position
+// Format parse tokens, and build
 func Format(src string, options *Options) (string, error) {
 	tokens, err := lexer.Tokenize(src)
 	if err != nil {
