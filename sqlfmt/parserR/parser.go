@@ -18,20 +18,26 @@ func ParseTokens(tokens []lexer.Token) ([]Expr, error) {
 	)
 
 	restTokens := tokens
-	for t := restTokens[0]; t.Type == lexer.EOF; {
+	idx := 0
+	for {
+		t := restTokens[idx]
+
 		switch t.Type {
+		case lexer.SELECT:
+			expr, consumed, err = parseSelect(restTokens[idx:])
+		case lexer.FROM:
+			expr, consumed, err = parseFrom(restTokens[idx:])
 		case lexer.FUNCTION:
 			expr, consumed, err = parseFunction(restTokens)
-			if err != nil{
-				fmt.Println(err)
-			}
-		case lexer.IDENT:
-
+		case lexer.EOF:
+			return exprs, nil
 		}
 
-        restTokens = restTokens[consumed:]
+		if err != nil{
+			fmt.Println(err)
+		}
+
+		idx += consumed
 		exprs = append(exprs, expr)
 	}
-
-	return exprs, nil
 }
