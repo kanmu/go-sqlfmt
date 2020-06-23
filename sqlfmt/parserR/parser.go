@@ -1,7 +1,6 @@
 package parserR
 
 import (
-	"fmt"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 )
 
@@ -9,35 +8,59 @@ type Expr interface {
 	Build()string
 }
 
+type Result struct {
+	Values []Expr
+}
+
+func (pr *Result) Build() string {
+	return ""
+}
+
 func ParseTokens(tokens []lexer.Token) ([]Expr, error) {
+	rslt := &Result{}
 	var (
-		err error
+		idx int
 		expr Expr
-		exprs []Expr
 		consumed int
+		err error
 	)
 
-	restTokens := tokens
-	idx := 0
 	for {
-		t := restTokens[idx]
+		t := tokens[idx]
+		if rslt.endTType(t.Type){
+			return rslt.Values, nil
+		}
 
 		switch t.Type {
 		case lexer.SELECT:
-			expr, consumed, err = parseSelect(restTokens[idx:])
+			expr, consumed, err = parseSelect(tokens[idx:])
 		case lexer.FROM:
-			expr, consumed, err = parseFrom(restTokens[idx:])
+			expr, consumed, err = parseFrom(tokens[idx:])
 		case lexer.FUNCTION:
-			expr, consumed, err = parseFunction(restTokens)
 		case lexer.EOF:
-			return exprs, nil
+			return rslt.Values, nil
 		}
-
 		if err != nil{
-			fmt.Println(err)
+			return nil, err
 		}
 
-		idx += consumed
-		exprs = append(exprs, expr)
+		rslt.append(expr)
+		idx = nextIDX(idx, consumed)
 	}
+}
+
+
+func (rslt *Result) append(elm Expr){
+	rslt.Values = append(rslt.Values, elm)
+}
+
+func nextIDX(idx, consumed int) int{
+	return idx+consumed
+}
+
+func (rslt *Result) endTType(ttype lexer.TokenType) bool {
+	if ttype == lexer.EOF{
+		return true
+	}
+	return false
 }

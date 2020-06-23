@@ -25,15 +25,6 @@ func parseParenthesis(tokens []lexer.Token)(*ParenthesisExpr, int, error){
 		case lexer.SELECT:
 			// ParseSubquery的な関数を読んだら良さそう
 		case lexer.FUNCTION:
-			cExpr, cConsumed, err := parseFunction(tokens[consumed:])
-			if err != nil {
-				// FIXME: エラーハンドリングする
-				return nil, 0, err
-			}
-
-			cExpr.Parent = expr
-			expr.Values = append(expr.Values, cExpr)
-			consumed += cConsumed
 		default:
 			expr.Values = append(expr.Values, t)
 			consumed ++

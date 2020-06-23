@@ -1,56 +1,44 @@
 package parserR
 
 import (
+	"fmt"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 )
 
 type SelectExpr struct {
 	Values []interface{}
-	Parent Expr
 	SubQueryCnt int
 }
 
 func parseSelect(tokens []lexer.Token)(*SelectExpr, int, error){
-	var (
-		expr = &SelectExpr{}
-		consumed = 0
-		restTokens = tokens
+	expr := &SelectExpr{}
+
+	var(
+		idx int
+		consumed int
+		value interface{}
+		err error
 	)
-
-	// parseのそれぞれの関数がExprとconsumeしたcntだけを返すというインターフェースはそれで良さそう
-	idx := 0
 	for {
-		t := restTokens[idx]
-
+		t := tokens[idx]
 		if expr.endTType(t.Type) {
 			return expr, idx, nil
 		}
 
-
-		// 一番最初のトークンはそのままアペンド
-		// これはでも、fanctionの時しか必要ない？
-		if idx == 0 {
-			expr.Values = append(expr.Values, t)
-			idx++
-		} else {
+		value = t
+		consumed = 1
+		if idx > 0 {
 			switch t.Type {
 			case lexer.STARTPARENTHESIS:
-				parseParenthesis(restTokens)
+				// TODO
 			case lexer.FUNCTION:
-				cExpr, consumed, err := parseFunction(tokens[consumed:])
-				if err != nil {
-					// FIXME: エラーハンドリングする
-					return nil, 0, err
-				}
-
-				cExpr.Parent = expr
-				expr.Values = append(expr.Values, cExpr)
-				idx += consumed
-			default:
-				expr.Values = append(expr.Values, t)
-				idx++
+				// TODO
 			}
 		}
+
+		fmt.Println(err)
+		expr.append(value)
+		idx = nextIDX(idx, consumed)
 	}
 }
 
@@ -63,6 +51,10 @@ func (expr *SelectExpr) endTType(ttype lexer.TokenType) bool{
 	return false
 }
 
-func (f *SelectExpr) Build() string {
+func (expr *SelectExpr) append(elm interface{}) {
+	expr.Values = append(expr.Values, elm)
+}
+
+func (expr *SelectExpr) Build() string {
 	return ""
 }

@@ -13,7 +13,6 @@ type FromExpr struct {
 func parseFrom(tokens []lexer.Token)(*FromExpr, int, error){
 	var (
 		expr = &FromExpr{}
-		consumed = 0
 		restTokens = tokens
 	)
 
@@ -28,17 +27,7 @@ func parseFrom(tokens []lexer.Token)(*FromExpr, int, error){
 
 		switch t.Type {
 		case lexer.STARTPARENTHESIS:
-			parseParenthesis(restTokens)
 		case lexer.FUNCTION:
-			cExpr, consumed, err := parseFunction(tokens[consumed:])
-			if err != nil {
-				// FIXME: エラーハンドリングする
-				return nil, 0, err
-			}
-
-			cExpr.Parent = expr
-			expr.Values = append(expr.Values, cExpr)
-			idx += consumed
 		default:
 			expr.Values = append(expr.Values, t)
 			idx++
