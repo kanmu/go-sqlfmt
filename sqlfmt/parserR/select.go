@@ -13,10 +13,10 @@ type SelectExpr struct {
 func parseSelect(tokens []lexer.Token)(*SelectExpr, int, error){
 	expr := &SelectExpr{}
 
-	var(
+	var (
 		idx int
-		consumed int
 		value interface{}
+		consumed int
 		err error
 	)
 	for {
@@ -38,7 +38,7 @@ func parseSelect(tokens []lexer.Token)(*SelectExpr, int, error){
 
 		fmt.Println(err)
 		expr.append(value)
-		idx = nextIDX(idx, consumed)
+		idx += consumed
 	}
 }
 

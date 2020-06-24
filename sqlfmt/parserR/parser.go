@@ -45,17 +45,13 @@ func ParseTokens(tokens []lexer.Token) ([]Expr, error) {
 		}
 
 		rslt.append(expr)
-		idx = nextIDX(idx, consumed)
+		idx += consumed
 	}
 }
 
 
 func (rslt *Result) append(elm Expr){
 	rslt.Values = append(rslt.Values, elm)
-}
-
-func nextIDX(idx, consumed int) int{
-	return idx+consumed
 }
 
 func (rslt *Result) endTType(ttype lexer.TokenType) bool {

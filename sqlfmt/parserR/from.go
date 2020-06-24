@@ -1,6 +1,7 @@
 package parserR
 
 import (
+	"fmt"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 )
 
@@ -11,27 +12,32 @@ type FromExpr struct {
 }
 
 func parseFrom(tokens []lexer.Token)(*FromExpr, int, error){
+	expr := &FromExpr{}
 	var (
-		expr = &FromExpr{}
-		restTokens = tokens
+		idx int
+		value interface{}
+		consumed int
+		err error
 	)
-
-	idx := 0
 	// parseのそれぞれの関数がExprとconsumeしたcntだけを返すというインターフェースはそれで良さそう
 	for {
-		t := restTokens[idx]
-
+		t := tokens[idx]
 		if expr.endTType(t.Type) {
 			return expr, idx, nil
 		}
 
-		switch t.Type {
-		case lexer.STARTPARENTHESIS:
-		case lexer.FUNCTION:
-		default:
-			expr.Values = append(expr.Values, t)
-			idx++
+		value = t
+		consumed = 1
+		if idx > 0{
+			switch t.Type {
+			case lexer.STARTPARENTHESIS:
+			case lexer.FUNCTION:
+			}
 		}
+
+		fmt.Println(err)
+		expr.append(value)
+		idx += consumed
 	}
 }
 
@@ -46,4 +52,8 @@ func (expr *FromExpr) endTType(ttype lexer.TokenType) bool{
 
 func (f *FromExpr) Build() string {
 	return ""
+}
+
+func (f *FromExpr) append(elm interface{}) {
+	f.Values = append(f.Values, elm)
 }

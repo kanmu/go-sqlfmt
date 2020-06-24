@@ -113,7 +113,7 @@ func (t Token) IncrementIndentLevel(lev int) {}
 // end keywords of each clause
 var (
 	EndOfSelect      = []TokenType{FROM, UNION, EOF}
-	EndOfCase        = []TokenType{END}
+	EndOfCase        = []TokenType{END, EOF}
 	EndOfFrom        = []TokenType{WHERE, INNER, OUTER, LEFT, RIGHT, JOIN, NATURAL, CROSS, ORDER, GROUP, UNION, OFFSET, LIMIT, FETCH, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfJoin        = []TokenType{WHERE, ORDER, GROUP, LIMIT, OFFSET, FETCH, ANDGROUP, ORGROUP, LEFT, RIGHT, INNER, OUTER, NATURAL, CROSS, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfWhere       = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, ANDGROUP, OR, UNION, EXCEPT, INTERSECT, RETURNING, EOF, ENDPARENTHESIS}
