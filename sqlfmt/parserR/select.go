@@ -20,15 +20,17 @@ func parseSelect(tokens []lexer.Token)(*SelectExpr, int, error){
 		err error
 	)
 	for {
-		t := tokens[idx]
-		if expr.endTType(t.Type) {
+		token := tokens[idx]
+		if expr.endTType(token.Type) {
 			return expr, idx, nil
 		}
 
-		value = t
+		// if any expr appears from the second token, it should be parsed as one expr and consumed will be the count of tokens in the expr
+		// in other cases, value will be the token and consumed will be 1
+		value = token
 		consumed = 1
 		if idx > 0 {
-			switch t.Type {
+			switch token.Type {
 			case lexer.STARTPARENTHESIS:
 				// TODO
 			case lexer.FUNCTION:
