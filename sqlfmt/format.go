@@ -4,31 +4,42 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"strings"
-
 	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser"
 	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
+	"strings"
 )
 
-// Format formats src in 3 steps
-// 1: tokenize src
-// 2: parse tokens by SQL clause group
-// 3: for each clause group (Reindenter), add indentation or new line in the correct position
+// Format parse tokens, and build
 func Format(src string, options *Options) (string, error) {
-	t := lexer.NewTokenizer(src)
-	tokens, err := t.GetTokens()
+	// 最初と最後を取り除く的な事をする ` or "
+	tokens, err := lexer.Tokenize(src)
 	if err != nil {
 		return src, errors.Wrap(err, "Tokenize failed")
 	}
 
-	rs, err := parser.ParseTokens(tokens)
+	exprs, err := parser.ParseTokens(tokens)
 	if err != nil {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	res, err := getFormattedStmt(rs, options.Distance)
+	/*
+	        var buf &bytes.Buffer{}
+	        for _, expr := range exprs {
+	            stmt, err = expr.Build(options)
+	            // err
+	            buf.WriteString(stmt)
+	        }
+
+	        res := buf.String()
+			if bytes.Compare(src, res) {
+	            // 崩れたよ！って教えるやつ
+				return err
+			}
+			return res
+	 */
+	res, err := getFormattedStmt(exprs, options.Distance)
 	if err != nil {
 		return src, errors.Wrap(err, "getFormattedStmt failed")
 	}

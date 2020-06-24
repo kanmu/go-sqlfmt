@@ -45,8 +45,7 @@ func visitFile(path string, info os.FileInfo, err error) error {
 		err = processFile(path, nil, os.Stdout)
 	}
 	if err != nil {
-		processError(errors.Wrap(err, "visit file failed"))
-
+		log.Fatal(err)
 	}
 	return nil
 }
@@ -111,7 +110,7 @@ func sqlfmtMain() {
 			log.Fatal("can not use -w while using pipeline")
 		}
 		if err := processFile("<standard input>", os.Stdin, os.Stdout); err != nil {
-			processError(errors.Wrap(err, "processFile failed"))
+			log.Fatal(err)
 		}
 		return
 	}
@@ -120,18 +119,18 @@ func sqlfmtMain() {
 		path := flag.Arg(i)
 		switch dir, err := os.Stat(path); {
 		case err != nil:
-			processError(err)
+			log.Fatal(err)
 		case dir.IsDir():
 			walkDir(path)
 		default:
 			info, err := os.Stat(path)
 			if err != nil {
-				processError(err)
+				log.Fatal(err)
 			}
 			if isGoFile(info) {
 				err = processFile(path, nil, os.Stdout)
 				if err != nil {
-					processError(err)
+					log.Fatal(err)
 				}
 			}
 		}
@@ -168,13 +167,4 @@ func diff(b1, b2 []byte) (data []byte, err error) {
 		err = nil
 	}
 	return
-}
-
-func processError(err error) {
-	switch err.(type) {
-	case *sqlfmt.FormatError:
-		log.Println(err)
-	default:
-		log.Fatal(err)
-	}
 }

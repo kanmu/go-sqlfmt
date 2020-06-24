@@ -1,50 +1,78 @@
 package sqlfmt
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
+	"golang.org/x/tools/go/ast/astutil"
 	"log"
-	"strings"
-
-	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
 )
 
-// sqlfmt retrieves all strings from "Query" and "QueryRow" and "Exec" functions in .go file
-const (
-	QUERY    = "Query"
-	QUERYROW = "QueryRow"
-	EXEC     = "Exec"
-)
-
-// replaceAst replace ast node with formatted SQL statement
-func replaceAst(f *ast.File, fset *token.FileSet, options *Options) {
+// Replace replace ast node with formatted SQL statement
+func Replace(f *ast.File, options *Options) {
 	ast.Inspect(f, func(n ast.Node) bool {
-		if x, ok := n.(*ast.CallExpr); ok {
-			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
-				funcName := fun.Sel.Name
-				if funcName == QUERY || funcName == QUERYROW || funcName == EXEC {
-					// not for parsing url.Query
-					if len(x.Args) > 0 {
-						if arg, ok := x.Args[0].(*ast.BasicLit); ok {
-							sqlStmt := arg.Value
-							if !strings.HasPrefix(sqlStmt, "`") {
-								return true
-							}
-							src := strings.Trim(sqlStmt, "`")
-							res, err := Format(src, options)
-							if err != nil {
-								log.Println(fmt.Sprintf("Format failed at %s: %v", fset.Position(arg.Pos()), err))
-								return true
-							}
-							// FIXME
-							// more elegant
-							arg.Value = "`" + res + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
-						}
-					}
-				}
+		sql, found := findSQL(n)
+		if found {
+			res, err := Format(sql, options)
+			if err != nil {
+				log.Println(err)
+
+				// XXX for debugging
+				log.Println(sql)
+			} else {
+				replace(n, res)
 			}
 		}
 		return true
 	})
+}
+
+func replace(n ast.Node, sql string) {
+	replaceFunc := func(cr *astutil.Cursor) bool {
+		cr.Replace(&ast.BasicLit{
+			Kind:  token.STRING,
+			Value: sql,
+		})
+		return true
+	}
+	astutil.Apply(n, replaceFunc, nil)
+}
+
+func findSQL(n ast.Node) (string, bool) {
+	ce, ok := n.(*ast.CallExpr)
+	if !ok {
+		return "", false
+	}
+	se, ok := ce.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return "", false
+	}
+
+	// check func name
+	ok = validateFuncName(se.Sel.Name)
+	if !ok {
+		return "", false
+	}
+
+	// check length of the parameter
+	// this is not for parsing "url.Query()"
+	// FIXME: very adhoc
+	if len(ce.Args) == 0 {
+		return "", false
+	}
+
+	// SQL statement should appear in the first parameter
+	arg, ok := ce.Args[0].(*ast.BasicLit)
+	if !ok {
+		return "", false
+	}
+	return arg.Value, true
+}
+
+// go-sqlfmt only formats the value passed as the parameter of "Exec(string, ... any type)", "Query(string, ... any type)" and "QueryRow(string, ... any type)"
+func validateFuncName(name string) bool {
+	switch name {
+	case "Exec", "Query", "QueryRow":
+		return true
+	}
+	return false
 }

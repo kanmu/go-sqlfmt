@@ -4,5 +4,4 @@ vendor
 
 
 # for GoLand user
-.idea/**/workspace.xml
-.idea/**/tasks.xmlq
+.idea

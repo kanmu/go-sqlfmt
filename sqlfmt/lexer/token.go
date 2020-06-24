@@ -90,6 +90,9 @@ const (
 
 	QUOTEAREA
 	SURROUNDING
+	COLON
+	DOUBLECOLON
+	SPACE
 )
 
 // TokenType is an alias type that represents a kind of token
@@ -110,7 +113,7 @@ func (t Token) IncrementIndentLevel(lev int) {}
 // end keywords of each clause
 var (
 	EndOfSelect      = []TokenType{FROM, UNION, EOF}
-	EndOfCase        = []TokenType{END}
+	EndOfCase        = []TokenType{END, EOF}
 	EndOfFrom        = []TokenType{WHERE, INNER, OUTER, LEFT, RIGHT, JOIN, NATURAL, CROSS, ORDER, GROUP, UNION, OFFSET, LIMIT, FETCH, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfJoin        = []TokenType{WHERE, ORDER, GROUP, LIMIT, OFFSET, FETCH, ANDGROUP, ORGROUP, LEFT, RIGHT, INNER, OUTER, NATURAL, CROSS, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfWhere       = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, ANDGROUP, OR, UNION, EXCEPT, INTERSECT, RETURNING, EOF, ENDPARENTHESIS}
@@ -120,16 +123,17 @@ var (
 	EndOfHaving      = []TokenType{LIMIT, OFFSET, FETCH, ORDER, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfOrderBy     = []TokenType{LIMIT, FETCH, OFFSET, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfLimitClause = []TokenType{UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
-	EndOfParenthesis = []TokenType{ENDPARENTHESIS}
-	EndOfTieClause   = []TokenType{SELECT}
+	EndOfParenthesis = []TokenType{ENDPARENTHESIS, EOF}
+	// 微妙
+	EndOfTieClause   = []TokenType{SELECT, EOF}
 	EndOfUpdate      = []TokenType{WHERE, SET, RETURNING, EOF}
 	EndOfSet         = []TokenType{WHERE, RETURNING, EOF}
 	EndOfReturning   = []TokenType{EOF}
 	EndOfDelete      = []TokenType{WHERE, FROM, EOF}
 	EndOfInsert      = []TokenType{VALUES, EOF}
 	EndOfValues      = []TokenType{UPDATE, RETURNING, EOF}
-	EndOfFunction    = []TokenType{ENDPARENTHESIS}
-	EndOfTypeCast    = []TokenType{ENDPARENTHESIS}
+	EndOfFunction    = []TokenType{ENDPARENTHESIS, EOF}
+	EndOfTypeCast    = []TokenType{ENDPARENTHESIS, EOF}
 	EndOfLock        = []TokenType{EOF}
 	EndOfWith        = []TokenType{EOF}
 )
