@@ -91,7 +91,7 @@ func (r *Retriever) appendGroupsToResult() error {
 		token lexer.Token
 	)
 	for {
-		if idx > len(r.TokenSource) {
+		if idx >= len(r.TokenSource) {
 			return fmt.Errorf("the retriever may have not found the endToken")
 		}
 
