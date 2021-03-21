@@ -40,6 +40,10 @@ func isGoFile(info os.FileInfo) bool {
 	return !info.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
 }
 
+func isPipeInput(info os.FileInfo) bool {
+	return info.Mode()&os.ModeCharDevice == 0
+}
+
 func visitFile(path string, info os.FileInfo, err error) error {
 	if err == nil && isGoFile(info) {
 		err = processFile(path, nil, os.Stdout)
@@ -107,6 +111,10 @@ func sqlfmtMain() {
 
 	// the user is piping their source into go-sqlfmt
 	if flag.NArg() == 0 {
+		if info, _ := os.Stdin.Stat(); !isPipeInput(info) {
+			flag.Usage()
+			return
+		}
 		if *write {
 			log.Fatal("can not use -w while using pipeline")
 		}
