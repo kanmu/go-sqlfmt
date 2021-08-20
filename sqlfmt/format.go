@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
-	"github.com/kanmu/go-sqlfmt/sqlfmt/parser"
-	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/parser"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/parser/group"
 	"github.com/pkg/errors"
 )
 

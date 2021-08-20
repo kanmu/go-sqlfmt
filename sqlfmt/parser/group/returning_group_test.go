@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
 func TestReindentReturningGroup(t *testing.T) {

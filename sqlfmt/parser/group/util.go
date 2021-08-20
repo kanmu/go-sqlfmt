@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/kanmu/go-sqlfmt/sqlfmt/lexer"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
 // separate elements by comma and the reserved word in select clause

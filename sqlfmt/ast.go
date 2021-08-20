@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/kanmu/go-sqlfmt/sqlfmt/parser/group"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/parser/group"
 )
 
 // sqlfmt retrieves all strings from "Query" and "QueryRow" and "Exec" functions in .go file
