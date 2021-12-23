@@ -24,7 +24,9 @@ func (c *Case) Reindent(buf *bytes.Buffer) error {
 		if token, ok := v.(lexer.Token); ok {
 			writeCase(buf, token, c.IndentLevel, c.hasCommaBefore)
 		} else {
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
 	return nil

@@ -25,11 +25,13 @@ func (u *Update) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(src) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, &u.start, u.IndentLevel); err != nil {
-				return err
+			if erw := writeWithComma(buf, v, &u.start, u.IndentLevel); erw != nil {
+				return erw
 			}
 		case Reindenter:
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
 

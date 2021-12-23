@@ -19,7 +19,9 @@ func (l *Lock) Reindent(buf *bytes.Buffer) error {
 		if token, ok := v.(lexer.Token); ok {
 			writeLock(buf, token)
 		} else {
-			v.Reindent(buf)
+			if err := v.Reindent(buf); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

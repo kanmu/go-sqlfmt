@@ -140,7 +140,11 @@ func TestScanWhiteSpace(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tnz := NewTokenizer(tt.src)
-			tnz.scanWhiteSpace()
+			if err := tnz.scanWhiteSpace(); err != nil {
+				t.Errorf("unexpected error: %v", err)
+
+				return
+			}
 
 			if got := tnz.result[0]; got != tt.want {
 				t.Errorf("\nwant %v, \ngot %v", tt.want, got)
@@ -169,7 +173,11 @@ func TestScanIdent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tnz := NewTokenizer(tt.src)
-			tnz.scanIdent()
+			if err := tnz.scanIdent(); err != nil {
+				t.Errorf("unexpected error: %v", err)
+
+				return
+			}
 
 			if got := tnz.result[0]; got != tt.want {
 				t.Errorf("\nwant %v, \ngot %v", tt.want, got)

@@ -40,7 +40,12 @@ func TestReindentSubqueryGroup(t *testing.T) {
 		buf := &bytes.Buffer{}
 		parenGroup := &Parenthesis{Element: tt.src, IndentLevel: 1}
 
-		parenGroup.Reindent(buf)
+		if err := parenGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

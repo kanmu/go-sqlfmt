@@ -24,7 +24,9 @@ func (tie *TieClause) Reindent(buf *bytes.Buffer) error {
 		if token, ok := el.(lexer.Token); ok {
 			write(buf, token, tie.IndentLevel)
 		} else {
-			el.Reindent(buf)
+			if eri := el.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
 

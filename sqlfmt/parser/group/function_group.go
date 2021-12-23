@@ -33,7 +33,9 @@ func (f *Function) Reindent(buf *bytes.Buffer) error {
 			}
 			writeFunction(buf, token, prev, f.IndentLevel, f.ColumnCount, f.InColumnArea)
 		} else {
-			el.Reindent(buf)
+			if eri := el.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
 	return nil

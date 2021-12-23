@@ -105,11 +105,17 @@ func (r *Retriever) appendGroupsToResult() error {
 			if !containsEndToken(subGroupRetriever.TokenSource, subGroupRetriever.endTokenTypes) {
 				return fmt.Errorf("sub group %s has no end key word", subGroupRetriever.TokenSource[0].Value)
 			}
-			subGroupRetriever.appendGroupsToResult()
+
+			if err := subGroupRetriever.appendGroupsToResult(); err != nil {
+				return err
+			}
+
 			if err := r.appendSubGroupToResult(subGroupRetriever.result, subGroupRetriever.indentLevel); err != nil {
 				return err
 			}
+
 			idx = subGroupRetriever.getNextTokenIdx(token.Type, idx)
+
 			continue
 		}
 		r.result = append(r.result, token)
@@ -127,20 +133,24 @@ func containsEndToken(tokenSource []lexer.Token, endTokenTypes []lexer.TokenType
 			}
 		}
 	}
+
 	return false
 }
 
 // isEndGroup determines if token is the end token
-func (r *Retriever) isEndGroup(token lexer.Token, endTokenTypes []lexer.TokenType, idx int) bool {
+func (r *Retriever) isEndGroup(token lexer.Token, _ []lexer.TokenType, idx int) bool {
 	for _, endTokenType := range r.endTokenTypes {
 		// ignore endTokens when first token type is equal to endTokenType because first token type might be a endTokenType. For example "AND","OR"
 		// isRangeOfJoinStart ignores if endTokenType appears in start of Join clause such as LEFT OUTER JOIN, INNER JOIN etc ...
 		if idx == 0 || r.isRangeOfJoinStart(idx) {
 			return false
-		} else if token.Type == endTokenType || token.Type == lexer.EOF {
+		}
+
+		if token.Type == endTokenType || token.Type == lexer.EOF {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -157,14 +167,17 @@ func (r *Retriever) getSubGroupRetriever(idx int) *Retriever {
 	if r.containIrregularGroupMaker(token.Type, idx) {
 		return nil
 	}
+
 	if token.Type == lexer.STARTPARENTHESIS && nextToken.Type == lexer.SELECT {
 		subR := NewRetriever(r.TokenSource[idx:])
 		subR.indentLevel = r.indentLevel
 
 		// if subquery is found, indentLevel of all tokens until ")" will be incremented
 		subR.indentLevel++
+
 		return subR
 	}
+
 	if token.IsJoinStart() {
 		// if group keywords appears in start of join group such as LEFT INNER JOIN, those keywords will be ignored
 		// In this case, "INNER" and "JOIN" are group keyword, but should not make subGroup
@@ -174,15 +187,19 @@ func (r *Retriever) getSubGroupRetriever(idx int) *Retriever {
 		}
 		subR := NewRetriever(r.TokenSource[idx:])
 		subR.indentLevel = r.indentLevel
+
 		return subR
 	}
+
 	for _, v := range lexer.TokenTypesOfGroupMaker {
 		if token.Type == v {
 			subR := NewRetriever(r.TokenSource[idx:])
 			subR.indentLevel = r.indentLevel
+
 			return subR
 		}
 	}
+
 	return nil
 }
 

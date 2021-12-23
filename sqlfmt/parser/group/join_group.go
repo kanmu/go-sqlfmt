@@ -19,13 +19,17 @@ func (j *Join) Reindent(buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
+
 	for i, v := range elements {
 		if token, ok := v.(lexer.Token); ok {
 			writeJoin(buf, token, j.IndentLevel, i == 0)
 		} else {
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
+
 	return nil
 }
 

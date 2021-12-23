@@ -7,6 +7,7 @@ import (
 )
 
 // GroupBy clause
+// nolint:revive
 type GroupBy struct {
 	Element     []Reindenter
 	IndentLevel int
@@ -25,11 +26,13 @@ func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, &g.start, g.IndentLevel); err != nil {
-				return err
+			if erw := writeWithComma(buf, v, &g.start, g.IndentLevel); erw != nil {
+				return erw
 			}
 		case Reindenter:
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
 

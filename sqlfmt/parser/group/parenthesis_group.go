@@ -28,7 +28,9 @@ func (p *Parenthesis) Reindent(buf *bytes.Buffer) error {
 			hasStartBefore = (i == 1)
 			writeParenthesis(buf, token, p.IndentLevel, p.ColumnCount, p.InColumnArea, hasStartBefore)
 		} else {
-			el.Reindent(buf)
+			if eri := el.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
 

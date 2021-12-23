@@ -1,3 +1,4 @@
+//nolint:dupl
 package group
 
 import (
@@ -28,7 +29,12 @@ func TestReindentReturningGroup(t *testing.T) {
 		buf := &bytes.Buffer{}
 		returningGroup := &Returning{Element: tt.tokenSource}
 
-		returningGroup.Reindent(buf)
+		if err := returningGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

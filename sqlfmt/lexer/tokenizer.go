@@ -90,7 +90,7 @@ func (t *Tokenizer) Tokenize() ([]Token, error) {
 }
 
 // unread undoes t.r.readRune method to get last character
-func (t *Tokenizer) unread() { t.r.UnreadRune() }
+func (t *Tokenizer) unread() { _ = t.r.UnreadRune() }
 
 func isWhiteSpace(ch rune) bool {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '　'
@@ -257,6 +257,7 @@ func (t *Tokenizer) scanString() error {
 func (t *Tokenizer) scanIdent() error {
 	t.unread()
 
+LOOP:
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
@@ -266,38 +267,41 @@ func (t *Tokenizer) scanIdent() error {
 				return err
 			}
 		}
-		if isWhiteSpace(ch) {
+		switch {
+		case isWhiteSpace(ch):
 			t.unread()
-			break
-		} else if isComma(ch) {
+			break LOOP
+		case isComma(ch):
 			t.unread()
-			break
-		} else if isStartParenthesis(ch) {
+			break LOOP
+		case isStartParenthesis(ch):
 			t.unread()
-			break
-		} else if isEndParenthesis(ch) {
+			break LOOP
+		case isEndParenthesis(ch):
 			t.unread()
-			break
-		} else if isSingleQuote(ch) {
+			break LOOP
+		case isSingleQuote(ch):
 			t.unread()
-			break
-		} else if isStartBracket(ch) {
+			break LOOP
+		case isStartBracket(ch):
 			t.unread()
-			break
-		} else if isEndBracket(ch) {
+			break LOOP
+		case isEndBracket(ch):
 			t.unread()
-			break
-		} else if isStartBrace(ch) {
+			break LOOP
+		case isStartBrace(ch):
 			t.unread()
-			break
-		} else if isEndBrace(ch) {
+			break LOOP
+		case isEndBrace(ch):
 			t.unread()
-			break
-		} else {
+			break LOOP
+		default:
 			t.w.WriteRune(ch)
 		}
 	}
+
 	t.append(t.w.String())
+
 	return nil
 }
 
@@ -315,6 +319,7 @@ func (t *Tokenizer) append(v string) {
 			Value: v,
 		})
 	}
+
 	t.w.Reset()
 }
 
@@ -329,6 +334,7 @@ func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
 		t.unread()
 		return IDENT, ok
 	}
+
 	return IDENT, false
 }
 

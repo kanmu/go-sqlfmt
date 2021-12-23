@@ -1,3 +1,4 @@
+//nolint:dupl
 package group
 
 import (
@@ -29,7 +30,12 @@ func TestReindentCaseGroup(t *testing.T) {
 		buf := &bytes.Buffer{}
 		caseGroup := &Case{Element: tt.tokenSource}
 
-		caseGroup.Reindent(buf)
+		if err := caseGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

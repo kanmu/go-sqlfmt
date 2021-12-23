@@ -28,9 +28,10 @@ func (s *Subquery) Reindent(buf *bytes.Buffer) error {
 		} else {
 			if s.InColumnArea {
 				el.IncrementIndentLevel(1)
-				el.Reindent(buf)
-			} else {
-				el.Reindent(buf)
+			}
+
+			if eri := el.Reindent(buf); eri != nil {
+				return eri
 			}
 		}
 	}

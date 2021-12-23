@@ -38,6 +38,7 @@ func usage() {
 
 func isGoFile(info os.FileInfo) bool {
 	name := info.Name()
+
 	return !info.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
 }
 
@@ -61,8 +62,8 @@ func visitFile(opts *sqlfmt.Options) func(string, os.FileInfo, error) error {
 	}
 }
 
-func walkDir(path string, opts *sqlfmt.Options) {
-	filepath.Walk(path, visitFile(opts))
+func walkDir(path string, opts *sqlfmt.Options) error {
+	return filepath.Walk(path, visitFile(opts))
 }
 
 func processFile(filename string, in io.Reader, out io.Writer, opts *sqlfmt.Options) error {
@@ -93,14 +94,21 @@ func processFile(filename string, in io.Reader, out io.Writer, opts *sqlfmt.Opti
 				return errors.Wrap(err, "ioutil.WriteFile failed")
 			}
 		}
+
 		if *doDiff {
-			data, err := diff(src, res)
-			if err != nil {
-				return errors.Wrap(err, "diff failed")
+			data, erd := diff(src, res)
+			if erd != nil {
+				return errors.Wrap(erd, "diff failed")
 			}
-			fmt.Printf("diff %s gofmt/%s\n", filename, filename)
-			out.Write(data)
+
+			fmt.Fprintf(os.Stdout, "diff %s gofmt/%s\n", filename, filename)
+
+			_, err = out.Write(data)
+			if err != nil {
+				return errors.Wrap(err, "out.Write failed")
+			}
 		}
+
 		if !*list && !*write && !*doDiff {
 			_, err = out.Write(res)
 			if err != nil {
@@ -123,6 +131,7 @@ func sqlfmtMain() {
 		if err := processFile("<standard input>", os.Stdin, os.Stdout, options); err != nil {
 			processError(errors.Wrap(err, "processFile failed"))
 		}
+
 		return
 	}
 
@@ -132,12 +141,16 @@ func sqlfmtMain() {
 		case err != nil:
 			processError(err)
 		case dir.IsDir():
-			walkDir(path, options)
-		default:
-			info, err := os.Stat(path)
-			if err != nil {
-				processError(err)
+			erw := walkDir(path, options)
+			if erw != nil {
+				processError(erw)
 			}
+		default:
+			info, ers := os.Stat(path)
+			if ers != nil {
+				processError(ers)
+			}
+
 			if options.IsRawSQL || isGoFile(info) {
 				err = processFile(path, nil, os.Stdout, options)
 				if err != nil {
@@ -153,31 +166,55 @@ func main() {
 	sqlfmtMain()
 }
 
-func diff(b1, b2 []byte) (data []byte, err error) {
+func diff(b1, b2 []byte) ([]byte, error) {
 	f1, err := ioutil.TempFile("", "sqlfmt")
 	if err != nil {
-		return
+		return nil, err
 	}
-	defer os.Remove(f1.Name())
-	defer f1.Close()
+	defer func() {
+		_ = os.Remove(f1.Name())
+	}()
+	defer func() {
+		_ = f1.Close()
+	}()
 
 	f2, err := ioutil.TempFile("", "sqlfmt")
 	if err != nil {
-		return
+		return nil, err
 	}
-	defer os.Remove(f2.Name())
-	defer f2.Close()
+	defer func() {
+		_ = os.Remove(f2.Name())
+	}()
+	defer func() {
+		_ = f2.Close()
+	}()
 
-	f1.Write(b1)
-	f2.Write(b2)
+	_, err = f1.Write(b1)
+	if err != nil {
+		processError(err)
 
-	data, err = exec.Command("diff", "-u", f1.Name(), f2.Name()).CombinedOutput()
+		return nil, err
+	}
+	_, err = f2.Write(b2)
+	if err != nil {
+		processError(err)
+
+		return nil, err
+	}
+
+	data, err := exec.Command("diff", "-u", f1.Name(), f2.Name()).CombinedOutput() //#nosec
 	if len(data) > 0 {
 		// diff exits with a non-zero status when the files don't match.
 		// Ignore that failure as long as we get output.
 		err = nil
 	}
-	return
+	if err != nil {
+		processError(err)
+
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func processError(err error) {

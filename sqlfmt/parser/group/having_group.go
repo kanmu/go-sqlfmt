@@ -19,13 +19,17 @@ func (h *Having) Reindent(buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
+
 	for _, el := range elements {
 		if token, ok := el.(lexer.Token); ok {
 			write(buf, token, h.IndentLevel)
 		} else {
-			el.Reindent(buf)
+			if eri := el.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
+
 	return nil
 }
 

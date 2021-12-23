@@ -40,7 +40,12 @@ func TestReindentUnionGroup(t *testing.T) {
 		buf := &bytes.Buffer{}
 		unionGroup := &TieClause{Element: tt.tokenSource}
 
-		unionGroup.Reindent(buf)
+		if err := unionGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

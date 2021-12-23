@@ -112,29 +112,29 @@ func (t Token) IncrementIndentLevel(lev int) {}
 
 // end keywords of each clause
 var (
-	EndOfSelect,
-	EndOfCase,
-	EndOfFrom,
-	EndOfJoin,
-	EndOfWhere,
-	EndOfAndGroup,
-	EndOfOrGroup,
-	EndOfGroupBy,
-	EndOfHaving,
-	EndOfOrderBy,
-	EndOfLimitClause,
-	EndOfParenthesis,
-	EndOfTieClause,
-	EndOfUpdate,
-	EndOfSet,
-	EndOfReturning,
-	EndOfDelete,
-	EndOfInsert,
-	EndOfValues,
-	EndOfFunction,
-	EndOfTypeCast,
-	EndOfLock,
-	EndOfWith []TokenType
+	EndOfSelect      []TokenType
+	EndOfCase        []TokenType
+	EndOfFrom        []TokenType
+	EndOfJoin        []TokenType
+	EndOfWhere       []TokenType
+	EndOfAndGroup    []TokenType
+	EndOfOrGroup     []TokenType
+	EndOfGroupBy     []TokenType
+	EndOfHaving      []TokenType
+	EndOfOrderBy     []TokenType
+	EndOfLimitClause []TokenType
+	EndOfParenthesis []TokenType
+	EndOfTieClause   []TokenType
+	EndOfUpdate      []TokenType
+	EndOfSet         []TokenType
+	EndOfReturning   []TokenType
+	EndOfDelete      []TokenType
+	EndOfInsert      []TokenType
+	EndOfValues      []TokenType
+	EndOfFunction    []TokenType
+	EndOfTypeCast    []TokenType
+	EndOfLock        []TokenType
+	EndOfWith        []TokenType
 )
 
 func init() {
@@ -165,9 +165,9 @@ func init() {
 
 // token types that contain the keyword to make subGroup
 var (
-	TokenTypesOfGroupMaker,
-	TokenTypesOfJoinMaker,
-	TokenTypeOfTieClause,
+	TokenTypesOfGroupMaker []TokenType
+	TokenTypesOfJoinMaker  []TokenType
+	TokenTypeOfTieClause   []TokenType
 	TokenTypeOfLimitClause []TokenType
 )
 
