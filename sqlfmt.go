@@ -43,13 +43,18 @@ func isGoFile(info os.FileInfo) bool {
 
 func visitFile(opts *sqlfmt.Options) func(string, os.FileInfo, error) error {
 	return func(path string, info os.FileInfo, err error) error {
-		if err == nil && (opts.IsRawSQL || isGoFile(info)) {
-			err = processFile(path, nil, os.Stdout, opts)
+		if err == nil && !info.IsDir() && (opts.IsRawSQL || isGoFile(info)) {
+			if isGoFile(info) {
+				opts.IsRawSQL = false
+
+				err = processFile(path, nil, os.Stdout, opts)
+			} else {
+				err = processFile(path, nil, os.Stdout, opts)
+			}
 		}
 
 		if err != nil {
-			processError(errors.Wrap(err, "visit file failed"))
-
+			processError(errors.Wrap(err, fmt.Sprintf("visit file failed: %s", path)))
 		}
 
 		return nil
