@@ -13,13 +13,22 @@ import (
 // Options for go-sqlfmt
 type Options struct {
 	Distance int
+	IsRawSQL bool
 }
 
 // Process formats SQL statement in .go file
 func Process(filename string, src []byte, options *Options) ([]byte, error) {
+	if options.IsRawSQL {
+		sql, err := Format(string(src), options)
+		if err != nil {
+			return nil, err
+		}
+
+		return []byte(sql), nil
+	}
+
 	fset := token.NewFileSet()
 	parserMode := parser.ParseComments
-
 	astFile, err := parser.ParseFile(fset, filename, src, parserMode)
 	if err != nil {
 		return nil, formatErr(errors.Wrap(err, "parser.ParseFile failed"))
@@ -28,7 +37,6 @@ func Process(filename string, src []byte, options *Options) ([]byte, error) {
 	replaceAst(astFile, fset, options)
 
 	var buf bytes.Buffer
-
 	if err = printer.Fprint(&buf, fset, astFile); err != nil {
 		return nil, formatErr(errors.Wrap(err, "printer.Fprint failed"))
 	}

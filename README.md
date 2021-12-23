@@ -110,11 +110,13 @@ run git clone and go build -o sqlfmt
                 with gofmt style.
   -distance     
                 Write the distance from the edge to the begin of SQL statements
+  -raw
+    	parse raw SQL file
 ```
 
 ## Limitations
 
-- The `sqlfmt` is only able to format SQL statements that are surrounded with **back quotes** and values in **`QueryRow`**, **`Query`**, **`Exec`**  functions from the `"database/sql"` package.
+- go source: The `sqlfmt` is only able to format SQL statements that are surrounded with **back quotes** and values in **`QueryRow`**, **`Query`**, **`Exec`**  functions from the `"database/sql"` package.
 
   The following SQL statements will be formatted:
 

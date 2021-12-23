@@ -28,6 +28,7 @@ var (
 
 func init() {
 	flag.IntVar(&options.Distance, "distance", 0, "write the distance from the edge to the begin of SQL statements")
+	flag.BoolVar(&options.IsRawSQL, "raw", false, "parse raw SQL file")
 }
 
 func usage() {
@@ -40,22 +41,26 @@ func isGoFile(info os.FileInfo) bool {
 	return !info.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
 }
 
-func visitFile(path string, info os.FileInfo, err error) error {
-	if err == nil && isGoFile(info) {
-		err = processFile(path, nil, os.Stdout)
-	}
-	if err != nil {
-		processError(errors.Wrap(err, "visit file failed"))
+func visitFile(opts *sqlfmt.Options) func(string, os.FileInfo, error) error {
+	return func(path string, info os.FileInfo, err error) error {
+		if err == nil && (opts.IsRawSQL || isGoFile(info)) {
+			err = processFile(path, nil, os.Stdout, opts)
+		}
 
+		if err != nil {
+			processError(errors.Wrap(err, "visit file failed"))
+
+		}
+
+		return nil
 	}
-	return nil
 }
 
-func walkDir(path string) {
-	filepath.Walk(path, visitFile)
+func walkDir(path string, opts *sqlfmt.Options) {
+	filepath.Walk(path, visitFile(opts))
 }
 
-func processFile(filename string, in io.Reader, out io.Writer) error {
+func processFile(filename string, in io.Reader, out io.Writer, opts *sqlfmt.Options) error {
 	if in == nil {
 		f, err := os.Open(filename)
 		if err != nil {
@@ -69,7 +74,7 @@ func processFile(filename string, in io.Reader, out io.Writer) error {
 		return errors.Wrap(err, "ioutil.ReadAll failed")
 	}
 
-	res, err := sqlfmt.Process(filename, src, options)
+	res, err := sqlfmt.Process(filename, src, opts)
 	if err != nil {
 		return errors.Wrap(err, "sqlfmt.Process failed")
 	}
@@ -110,7 +115,7 @@ func sqlfmtMain() {
 		if *write {
 			log.Fatal("can not use -w while using pipeline")
 		}
-		if err := processFile("<standard input>", os.Stdin, os.Stdout); err != nil {
+		if err := processFile("<standard input>", os.Stdin, os.Stdout, options); err != nil {
 			processError(errors.Wrap(err, "processFile failed"))
 		}
 		return
@@ -122,14 +127,14 @@ func sqlfmtMain() {
 		case err != nil:
 			processError(err)
 		case dir.IsDir():
-			walkDir(path)
+			walkDir(path, options)
 		default:
 			info, err := os.Stat(path)
 			if err != nil {
 				processError(err)
 			}
-			if isGoFile(info) {
-				err = processFile(path, nil, os.Stdout)
+			if options.IsRawSQL || isGoFile(info) {
+				err = processFile(path, nil, os.Stdout, options)
 				if err != nil {
 					processError(err)
 				}
