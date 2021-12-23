@@ -18,7 +18,9 @@ const (
 )
 
 // replaceAst replace ast node with formatted SQL statement
-func replaceAst(f *ast.File, fset *token.FileSet, options *Options) {
+func replaceAst(f *ast.File, fset *token.FileSet, opts ...Option) {
+	o := defaultOptions(opts...)
+
 	ast.Inspect(f, func(n ast.Node) bool {
 		if x, ok := n.(*ast.CallExpr); ok {
 			if fun, ok := x.Fun.(*ast.SelectorExpr); ok {
@@ -32,14 +34,14 @@ func replaceAst(f *ast.File, fset *token.FileSet, options *Options) {
 								return true
 							}
 							src := strings.Trim(sqlStmt, "`")
-							res, err := Format(src, options)
+							res, err := Format(src, opts...)
 							if err != nil {
 								log.Println(fmt.Sprintf("Format failed at %s: %v", fset.Position(arg.Pos()), err))
 								return true
 							}
 							// FIXME
 							// more elegant
-							arg.Value = "`" + res + strings.Repeat(group.WhiteSpace, options.Distance) + "`"
+							arg.Value = "`" + res + strings.Repeat(group.WhiteSpace, o.Distance) + "`"
 						}
 					}
 				}

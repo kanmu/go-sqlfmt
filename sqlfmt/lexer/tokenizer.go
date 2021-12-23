@@ -13,6 +13,7 @@ type Tokenizer struct {
 	r      *bufio.Reader
 	w      *bytes.Buffer // w  writes token value. It resets its value when the end of token appears
 	result []Token
+	*options
 }
 
 // rune that can't be contained in SQL statement
@@ -37,10 +38,11 @@ const (
 )
 
 // NewTokenizer creates Tokenizer
-func NewTokenizer(src string) *Tokenizer {
+func NewTokenizer(src string, opts ...Option) *Tokenizer {
 	return &Tokenizer{
-		r: bufio.NewReader(strings.NewReader(src)),
-		w: &bytes.Buffer{},
+		r:       bufio.NewReader(strings.NewReader(src)),
+		w:       &bytes.Buffer{},
+		options: defaultOptions(opts...),
 	}
 }
 
@@ -52,24 +54,31 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Tokenize failed")
 	}
+
 	// replace all tokens without whitespaces and new lines
 	// if "AND" or "OR" appears after new line, token value will be ANDGROUP, ORGROUP
 	for i, tok := range tokens {
 		if tok.Type == AND && tokens[i-1].Type == NEWLINE {
-			andGroupToken := Token{Type: ANDGROUP, Value: tok.Value}
+			andGroupToken := Token{Type: ANDGROUP, Value: tok.Value, options: t.options}
 			result = append(result, andGroupToken)
+
 			continue
 		}
+
 		if tok.Type == OR && tokens[i-1].Type == NEWLINE {
-			orGroupToken := Token{Type: ORGROUP, Value: tok.Value}
+			orGroupToken := Token{Type: ORGROUP, Value: tok.Value, options: t.options}
 			result = append(result, orGroupToken)
+
 			continue
 		}
+
 		if tok.Type == WS || tok.Type == NEWLINE {
 			continue
 		}
+
 		result = append(result, tok)
 	}
+
 	return result, nil
 }
 
@@ -82,10 +91,12 @@ func (t *Tokenizer) Tokenize() ([]Token, error) {
 		if isEOF {
 			break
 		}
+
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	return t.result, nil
 }
 
@@ -133,61 +144,72 @@ func isEndBrace(ch rune) bool {
 func (t *Tokenizer) scan() (bool, error) {
 	ch, _, err := t.r.ReadRune()
 	if err != nil {
-		if err.Error() == "EOF" {
-			ch = eof
-		} else {
+		if err.Error() != "EOF" {
 			return false, errors.Wrap(err, "read rune failed")
 		}
+
+		ch = eof
 	}
 
 	switch {
 	case ch == eof:
-		tok := Token{Type: EOF, Value: "EOF"}
+		tok := Token{Type: EOF, Value: "EOF", options: t.options}
 		t.result = append(t.result, tok)
+
 		return true, nil
 	case isWhiteSpace(ch):
 		if err := t.scanWhiteSpace(); err != nil {
 			return false, err
 		}
+
 		return false, nil
 	// extract string
 	case isSingleQuote(ch):
 		if err := t.scanString(); err != nil {
 			return false, err
 		}
+
 		return false, nil
 	case isComma(ch):
-		token := Token{Type: COMMA, Value: Comma}
+		token := Token{Type: COMMA, Value: Comma, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	case isStartParenthesis(ch):
-		token := Token{Type: STARTPARENTHESIS, Value: StartParenthesis}
+		token := Token{Type: STARTPARENTHESIS, Value: StartParenthesis, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	case isEndParenthesis(ch):
-		token := Token{Type: ENDPARENTHESIS, Value: EndParenthesis}
+		token := Token{Type: ENDPARENTHESIS, Value: EndParenthesis, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	case isStartBracket(ch):
-		token := Token{Type: STARTBRACKET, Value: StartBracket}
+		token := Token{Type: STARTBRACKET, Value: StartBracket, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	case isEndBracket(ch):
-		token := Token{Type: ENDBRACKET, Value: EndBracket}
+		token := Token{Type: ENDBRACKET, Value: EndBracket, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	case isStartBrace(ch):
-		token := Token{Type: STARTBRACE, Value: StartBrace}
+		token := Token{Type: STARTBRACE, Value: StartBrace, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	case isEndBrace(ch):
-		token := Token{Type: ENDBRACE, Value: EndBrace}
+		token := Token{Type: ENDBRACE, Value: EndBrace, options: t.options}
 		t.result = append(t.result, token)
+
 		return false, nil
 	default:
 		if err := t.scanIdent(); err != nil {
 			return false, err
 		}
+
 		return false, nil
 	}
 }
@@ -204,6 +226,7 @@ func (t *Tokenizer) scanWhiteSpace() error {
 				return err
 			}
 		}
+
 		if !isWhiteSpace(ch) {
 			t.unread()
 			break
@@ -213,13 +236,15 @@ func (t *Tokenizer) scanWhiteSpace() error {
 	}
 
 	if strings.Contains(t.w.String(), "\n") {
-		tok := Token{Type: NEWLINE, Value: "\n"}
+		tok := Token{Type: NEWLINE, Value: "\n", options: t.options}
 		t.result = append(t.result, tok)
 	} else {
-		tok := Token{Type: WS, Value: t.w.String()}
+		tok := Token{Type: WS, Value: t.w.String(), options: t.options}
 		t.result = append(t.result, tok)
 	}
+
 	t.w.Reset()
+
 	return nil
 }
 
@@ -237,6 +262,7 @@ func (t *Tokenizer) scanString() error {
 				return err
 			}
 		}
+
 		// ignore the first single quote
 		if counter != 0 && isSingleQuote(ch) {
 			t.w.WriteRune(ch)
@@ -246,9 +272,11 @@ func (t *Tokenizer) scanString() error {
 		}
 		counter++
 	}
-	tok := Token{Type: STRING, Value: t.w.String()}
+
+	tok := Token{Type: STRING, Value: t.w.String(), options: t.options}
 	t.result = append(t.result, tok)
 	t.w.Reset()
+
 	return nil
 }
 
@@ -310,13 +338,15 @@ func (t *Tokenizer) append(v string) {
 
 	if ttype, ok := t.isSQLKeyWord(upperValue); ok {
 		t.result = append(t.result, Token{
-			Type:  ttype,
-			Value: upperValue,
+			Type:    ttype,
+			Value:   upperValue,
+			options: t.options,
 		})
 	} else {
 		t.result = append(t.result, Token{
-			Type:  ttype,
-			Value: v,
+			Type:    ttype,
+			Value:   v,
+			options: t.options,
 		})
 	}
 

@@ -43,13 +43,13 @@ func separate(rs []Reindenter) []interface{} {
 				result = append(result, token)
 				buf.Reset()
 				count = 0
-			case strings.HasPrefix(token.Value, "::"):
-				buf.WriteString(token.Value)
+			case strings.HasPrefix(token.FormattedValue(), "::"):
+				buf.WriteString(token.FormattedValue())
 			default:
 				if count == 0 {
-					buf.WriteString(token.Value)
+					buf.WriteString(token.FormattedValue())
 				} else {
-					buf.WriteString(WhiteSpace + token.Value)
+					buf.WriteString(WhiteSpace + token.FormattedValue())
 				}
 				count++
 			}
@@ -107,12 +107,12 @@ func extractSurroundingArea(rs []Reindenter) (string, int, error) {
 		if token, ok := r.(lexer.Token); ok {
 			switch {
 			case token.Type == lexer.COMMA || token.Type == lexer.STARTBRACKET || token.Type == lexer.STARTBRACE || token.Type == lexer.ENDBRACKET || token.Type == lexer.ENDBRACE:
-				result += fmt.Sprint(token.Value)
+				result += fmt.Sprint(token.FormattedValue())
 				// for next token of StartToken
 			case i == 1:
-				result += fmt.Sprint(token.Value)
+				result += fmt.Sprint(token.FormattedValue())
 			default:
-				result += fmt.Sprint(WhiteSpace + token.Value)
+				result += fmt.Sprint(WhiteSpace + token.FormattedValue())
 			}
 
 			if token.Type == lexer.STARTBRACKET || token.Type == lexer.STARTBRACE || token.Type == lexer.STARTPARENTHESIS {

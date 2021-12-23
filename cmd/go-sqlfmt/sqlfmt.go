@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -18,38 +17,20 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt"
 )
 
-var (
-	// main operation modes
-	list    = flag.Bool("l", false, "list files whose formatting differs from goreturns's")
-	write   = flag.Bool("w", false, "write result to (source) file instead of stdout")
-	doDiff  = flag.Bool("d", false, "display diffs instead of rewriting files")
-	options = &sqlfmt.Options{}
-)
-
-func init() {
-	flag.IntVar(&options.Distance, "distance", 0, "write the distance from the edge to the begin of SQL statements")
-	flag.BoolVar(&options.IsRawSQL, "raw", false, "parse raw SQL file")
-}
-
-func usage() {
-	fmt.Fprintf(os.Stderr, "usage: sqlfmt [flags] [path ...]\n")
-	flag.PrintDefaults()
-}
-
 func isGoFile(info os.FileInfo) bool {
 	name := info.Name()
 
 	return !info.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
 }
 
-func visitFile(opts *sqlfmt.Options) func(string, os.FileInfo, error) error {
+func visitFile(opts *cliOptions) func(string, os.FileInfo, error) error {
 	return func(path string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() && (opts.IsRawSQL || isGoFile(info)) {
-			if isGoFile(info) {
-				opts.IsRawSQL = false
+		if err == nil {
+			if !info.IsDir() && (opts.IsRawSQL || isGoFile(info)) {
+				if isGoFile(info) {
+					opts.IsRawSQL = false
+				}
 
-				err = processFile(path, nil, os.Stdout, opts)
-			} else {
 				err = processFile(path, nil, os.Stdout, opts)
 			}
 		}
@@ -58,15 +39,15 @@ func visitFile(opts *sqlfmt.Options) func(string, os.FileInfo, error) error {
 			processError(errors.Wrap(err, fmt.Sprintf("visit file failed: %s", path)))
 		}
 
-		return nil
+		return err
 	}
 }
 
-func walkDir(path string, opts *sqlfmt.Options) error {
+func walkDir(path string, opts *cliOptions) error {
 	return filepath.Walk(path, visitFile(opts))
 }
 
-func processFile(filename string, in io.Reader, out io.Writer, opts *sqlfmt.Options) error {
+func processFile(filename string, in io.Reader, out io.Writer, opts *cliOptions) error {
 	if in == nil {
 		f, err := os.Open(filename)
 		if err != nil {
@@ -80,54 +61,56 @@ func processFile(filename string, in io.Reader, out io.Writer, opts *sqlfmt.Opti
 		return errors.Wrap(err, "ioutil.ReadAll failed")
 	}
 
-	res, err := sqlfmt.Process(filename, src, opts)
+	res, err := sqlfmt.Process(filename, src, opts.ToOptions()...)
 	if err != nil {
 		return errors.Wrap(err, "sqlfmt.Process failed")
 	}
 
-	if !bytes.Equal(src, res) {
-		if *list {
-			fmt.Fprintln(out, filename)
-		}
-		if *write {
-			if err = ioutil.WriteFile(filename, res, 0); err != nil {
-				return errors.Wrap(err, "ioutil.WriteFile failed")
-			}
-		}
+	if bytes.Equal(src, res) {
+		return nil
+	}
 
-		if *doDiff {
-			data, erd := diff(src, res)
-			if erd != nil {
-				return errors.Wrap(erd, "diff failed")
-			}
+	if options.List {
+		fmt.Fprintln(out, filename)
+	}
 
-			fmt.Fprintf(os.Stdout, "diff %s gofmt/%s\n", filename, filename)
-
-			_, err = out.Write(data)
-			if err != nil {
-				return errors.Wrap(err, "out.Write failed")
-			}
-		}
-
-		if !*list && !*write && !*doDiff {
-			_, err = out.Write(res)
-			if err != nil {
-				return errors.Wrap(err, "out.Write failed")
-			}
+	if options.Write {
+		if err = ioutil.WriteFile(filename, res, 0); err != nil {
+			return errors.Wrap(err, "ioutil.WriteFile failed")
 		}
 	}
+
+	if options.Diff {
+		data, erd := diff(src, res)
+		if erd != nil {
+			return errors.Wrap(erd, "diff failed")
+		}
+
+		fmt.Fprintf(os.Stdout, "diff %s gofmt/%s\n", filename, filename)
+
+		_, err = out.Write(data)
+		if err != nil {
+			return errors.Wrap(err, "out.Write failed")
+		}
+	}
+
+	if !options.List && !options.Write && !options.Diff {
+		_, err = out.Write(res)
+		if err != nil {
+			return errors.Wrap(err, "out.Write failed")
+		}
+	}
+
 	return nil
 }
 
 func sqlfmtMain() {
-	flag.Usage = usage
-	flag.Parse()
-
 	// the user is piping their source into go-sqlfmt
 	if flag.NArg() == 0 {
-		if *write {
+		if options.Write {
 			log.Fatal("can not use -w while using pipeline")
 		}
+
 		if err := processFile("<standard input>", os.Stdin, os.Stdout, options); err != nil {
 			processError(errors.Wrap(err, "processFile failed"))
 		}
@@ -159,11 +142,6 @@ func sqlfmtMain() {
 			}
 		}
 	}
-}
-
-func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	sqlfmtMain()
 }
 
 func diff(b1, b2 []byte) ([]byte, error) {
@@ -202,6 +180,7 @@ func diff(b1, b2 []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	// TODO: use lib instead of shell
 	data, err := exec.Command("diff", "-u", f1.Name(), f2.Name()).CombinedOutput() //#nosec
 	if len(data) > 0 {
 		// diff exits with a non-zero status when the files don't match.

@@ -5,6 +5,8 @@ import (
 )
 
 // Token types
+//
+//
 const (
 	EOF TokenType = 1 + iota // eof
 	WS                       // white space
@@ -99,6 +101,7 @@ type TokenType int
 type Token struct {
 	Type  TokenType
 	Value string
+	*options
 }
 
 // Reindent is a placeholder for implementing Reindenter interface
@@ -109,6 +112,55 @@ func (t Token) GetStart() int { return 0 }
 
 // IncrementIndentLevel is a placeholder implementing Reindenter interface
 func (t Token) IncrementIndentLevel(lev int) {}
+
+func (t Token) formatKeyword() string {
+	if t.options == nil {
+		return t.Value
+	}
+	in := t.Value
+
+	if t.recaser != nil {
+		in = t.recaser(in)
+	}
+
+	if t.colorizer != nil {
+		in = t.colorizer(in)
+	}
+
+	return in
+}
+
+func (t Token) formatIdent() string {
+	return t.Value
+}
+
+func (t Token) formatPunctuation() string {
+	return t.Value
+}
+
+// FormattedValue returns the token with some formatting options
+func (t Token) FormattedValue() string {
+	switch t.Type {
+	case EOF,
+		WS,
+		NEWLINE,
+		COMMA,
+		STARTPARENTHESIS,
+		ENDPARENTHESIS,
+		STARTBRACKET,
+		ENDBRACKET,
+		STARTBRACE,
+		ENDBRACE,
+		ANDGROUP,
+		ORGROUP:
+		return t.formatPunctuation()
+	case IDENT, // field or table name
+		STRING: // values surrounded with single quotes
+		return t.formatIdent()
+	default:
+		return t.formatKeyword()
+	}
+}
 
 // end keywords of each clause
 var (

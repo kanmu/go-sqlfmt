@@ -61,17 +61,17 @@ var (
 func write(buf *bytes.Buffer, token lexer.Token, indent int) {
 	switch {
 	case token.IsNeedNewLineBefore():
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 	case token.Type == lexer.COMMA:
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
 	case token.Type == lexer.DO:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, token.Value, WhiteSpace))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(token.Value)
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, token.FormattedValue(), WhiteSpace))
+	case strings.HasPrefix(token.FormattedValue(), "::"):
+		buf.WriteString(token.FormattedValue())
 	case token.Type == lexer.WITH:
-		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.FormattedValue()))
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
 }
 
@@ -84,13 +84,13 @@ func writeWithComma(buf *bytes.Buffer, v interface{}, start *int, indent int) er
 	if token, ok := v.(lexer.Token); ok {
 		switch {
 		case token.IsNeedNewLineBefore():
-			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 		case token.Type == lexer.BY:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 		case token.Type == lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
 		default:
-			return fmt.Errorf("can not reindent %#v", token.Value)
+			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
 		}
 	} else if str, ok := v.(string); ok {
 		str = strings.TrimRight(str, " ")
@@ -98,7 +98,7 @@ func writeWithComma(buf *bytes.Buffer, v interface{}, start *int, indent int) er
 		switch {
 		case columnCount == 0:
 			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
-		case strings.HasPrefix(token.Value, "::"):
+		case strings.HasPrefix(token.FormattedValue(), "::"):
 			buf.WriteString(str)
 		default:
 			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
@@ -119,16 +119,16 @@ func writeSelect(buf *bytes.Buffer, el interface{}, start *int, indent int) erro
 	if token, ok := el.(lexer.Token); ok {
 		switch token.Type {
 		case lexer.SELECT, lexer.INTO:
-			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 		case lexer.AS, lexer.DISTINCT, lexer.DISTINCTROW, lexer.GROUP, lexer.ON:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 		case lexer.EXISTS:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 			columnCount++
 		case lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
 		default:
-			return fmt.Errorf("can not reindent %#v", token.Value)
+			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
 		}
 	} else if str, ok := el.(string); ok {
 		str = strings.Trim(str, WhiteSpace)
@@ -146,33 +146,33 @@ func writeCase(buf *bytes.Buffer, token lexer.Token, indent int, hasCommaBefore 
 	if hasCommaBefore {
 		switch token.Type {
 		case lexer.CASE:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 		case lexer.WHEN, lexer.ELSE:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, WhiteSpace, DoubleWhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, WhiteSpace, DoubleWhiteSpace, token.FormattedValue()))
 		case lexer.END:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, WhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, WhiteSpace, token.FormattedValue()))
 		case lexer.COMMA:
-			buf.WriteString(token.Value)
+			buf.WriteString(token.FormattedValue())
 		default:
-			if strings.HasPrefix(token.Value, "::") {
-				buf.WriteString(token.Value)
+			if strings.HasPrefix(token.FormattedValue(), "::") {
+				buf.WriteString(token.FormattedValue())
 			} else {
-				buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+				buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 			}
 		}
 	} else {
 		switch token.Type {
 		case lexer.CASE, lexer.END:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
 		case lexer.WHEN, lexer.ELSE:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, DoubleWhiteSpace, token.Value))
+			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, DoubleWhiteSpace, token.FormattedValue()))
 		case lexer.COMMA:
-			buf.WriteString(token.Value)
+			buf.WriteString(token.FormattedValue())
 		default:
-			if strings.HasPrefix(token.Value, "::") {
-				buf.WriteString(token.Value)
+			if strings.HasPrefix(token.FormattedValue(), "::") {
+				buf.WriteString(token.FormattedValue())
 			} else {
-				buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+				buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 			}
 		}
 	}
@@ -181,87 +181,87 @@ func writeCase(buf *bytes.Buffer, token lexer.Token, indent int, hasCommaBefore 
 func writeJoin(buf *bytes.Buffer, token lexer.Token, indent int, isFirst bool) {
 	switch {
 	case isFirst && token.IsJoinStart():
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 	case token.Type == lexer.ON || token.Type == lexer.USING:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(token.Value)
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
+	case strings.HasPrefix(token.FormattedValue(), "::"):
+		buf.WriteString(token.FormattedValue())
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
 }
 
 func writeFunction(buf *bytes.Buffer, token, prev lexer.Token, indent, columnCount int, inColumnArea bool) {
 	switch {
 	case prev.Type == lexer.STARTPARENTHESIS || token.Type == lexer.STARTPARENTHESIS || token.Type == lexer.ENDPARENTHESIS:
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
 	case token.Type == lexer.FUNCTION && columnCount == 0 && inColumnArea:
-		buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
 	case token.Type == lexer.FUNCTION:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	case token.Type == lexer.COMMA:
-		buf.WriteString(token.Value)
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
+	case strings.HasPrefix(token.FormattedValue(), "::"):
+		buf.WriteString(token.FormattedValue())
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
 }
 
 func writeParenthesis(buf *bytes.Buffer, token lexer.Token, indent, columnCount int, inColumnArea, hasStartBefore bool) {
 	switch {
 	case token.Type == lexer.STARTPARENTHESIS && columnCount == 0 && inColumnArea:
-		buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
 	case token.Type == lexer.STARTPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	case token.Type == lexer.ENDPARENTHESIS:
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
 	case token.Type == lexer.COMMA:
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
 	case hasStartBefore:
-		buf.WriteString(token.Value)
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
+	case strings.HasPrefix(token.FormattedValue(), "::"):
+		buf.WriteString(token.FormattedValue())
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
 }
 
 func writeSubquery(buf *bytes.Buffer, token lexer.Token, indent, columnCount int, inColumnArea bool) {
 	switch {
 	case token.Type == lexer.STARTPARENTHESIS && columnCount == 0 && inColumnArea:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 	case token.Type == lexer.STARTPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	case token.Type == lexer.ENDPARENTHESIS && columnCount > 0:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 	case token.Type == lexer.ENDPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent-1), token.Value))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(token.Value)
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent-1), token.FormattedValue()))
+	case strings.HasPrefix(token.FormattedValue(), "::"):
+		buf.WriteString(token.FormattedValue())
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
 }
 
 func writeTypeCast(buf *bytes.Buffer, token lexer.Token) {
 	switch token.Type {
 	case lexer.TYPE:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	case lexer.COMMA:
-		buf.WriteString(fmt.Sprintf("%s%s", token.Value, WhiteSpace))
+		buf.WriteString(fmt.Sprintf("%s%s", token.FormattedValue(), WhiteSpace))
 	default:
-		buf.WriteString(token.Value)
+		buf.WriteString(token.FormattedValue())
 	}
 }
 
 func writeLock(buf *bytes.Buffer, token lexer.Token) {
 	switch token.Type {
 	case lexer.LOCK:
-		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.FormattedValue()))
 	case lexer.IN:
-		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.FormattedValue()))
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
 }
