@@ -10,11 +10,12 @@ import (
 type OrderBy struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements
 func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+	o.start = 0
 
 	src, err := processPunctuation(o.Element)
 	if err != nil {
@@ -24,7 +25,7 @@ func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(src) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, o.IndentLevel); err != nil {
+			if err := writeWithComma(buf, v, &o.start, o.IndentLevel); err != nil {
 				return err
 			}
 		case Reindenter:

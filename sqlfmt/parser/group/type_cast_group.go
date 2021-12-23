@@ -10,6 +10,7 @@ import (
 type TypeCast struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements
@@ -18,11 +19,13 @@ func (t *TypeCast) Reindent(buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
+
 	for _, el := range elements {
 		if token, ok := el.(lexer.Token); ok {
 			writeTypeCast(buf, token)
 		}
 	}
+
 	return nil
 }
 

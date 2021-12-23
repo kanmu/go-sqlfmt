@@ -12,6 +12,7 @@ type Subquery struct {
 	IndentLevel  int
 	InColumnArea bool
 	ColumnCount  int
+	baseReindenter
 }
 
 // Reindent reindents its elements
@@ -20,6 +21,7 @@ func (s *Subquery) Reindent(buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
+
 	for _, el := range elements {
 		if token, ok := el.(lexer.Token); ok {
 			writeSubquery(buf, token, s.IndentLevel, s.ColumnCount, s.InColumnArea)
@@ -32,6 +34,7 @@ func (s *Subquery) Reindent(buf *bytes.Buffer) error {
 			}
 		}
 	}
+
 	return nil
 }
 

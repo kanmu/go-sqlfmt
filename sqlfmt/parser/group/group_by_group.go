@@ -10,11 +10,12 @@ import (
 type GroupBy struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements
 func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+	g.start = 0
 
 	elements, err := processPunctuation(g.Element)
 	if err != nil {
@@ -24,13 +25,14 @@ func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, g.IndentLevel); err != nil {
+			if err := writeWithComma(buf, v, &g.start, g.IndentLevel); err != nil {
 				return err
 			}
 		case Reindenter:
 			v.Reindent(buf)
 		}
 	}
+
 	return nil
 }
 

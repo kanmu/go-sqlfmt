@@ -10,6 +10,7 @@ import (
 type Values struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements
@@ -18,6 +19,7 @@ func (val *Values) Reindent(buf *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
+
 	for _, el := range elements {
 		if token, ok := el.(lexer.Token); ok {
 			write(buf, token, val.IndentLevel)
@@ -25,6 +27,7 @@ func (val *Values) Reindent(buf *bytes.Buffer) error {
 			el.Reindent(buf)
 		}
 	}
+
 	return nil
 }
 

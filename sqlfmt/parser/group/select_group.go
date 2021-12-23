@@ -12,11 +12,12 @@ import (
 type Select struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindens its elements
 func (s *Select) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+	s.start = 0
 
 	src, err := processPunctuation(s.Element)
 	if err != nil {
@@ -27,7 +28,7 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 	for i, element := range elements {
 		switch v := element.(type) {
 		case lexer.Token, string:
-			if err := writeSelect(buf, element, s.IndentLevel); err != nil {
+			if err := writeSelect(buf, element, &s.start, s.IndentLevel); err != nil {
 				return errors.Wrap(err, "writeSelect failed")
 			}
 		case *Case:
@@ -38,12 +39,12 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 			}
 			v.Reindent(buf)
 			// Case group in Select clause must be in column area
-			columnCount++
+			s.start++
 		case *Parenthesis:
 			v.InColumnArea = true
-			v.ColumnCount = columnCount
+			v.ColumnCount = s.start
 			v.Reindent(buf)
-			columnCount++
+			s.start++
 		case *Subquery:
 			if token, ok := elements[i-1].(lexer.Token); ok {
 				if token.Type == lexer.EXISTS {
@@ -52,16 +53,16 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 				}
 			}
 			v.InColumnArea = true
-			v.ColumnCount = columnCount
+			v.ColumnCount = s.start
 			v.Reindent(buf)
 		case *Function:
 			v.InColumnArea = true
-			v.ColumnCount = columnCount
+			v.ColumnCount = s.start
 			v.Reindent(buf)
-			columnCount++
+			s.start++
 		case Reindenter:
 			v.Reindent(buf)
-			columnCount++
+			s.start++
 		default:
 			return fmt.Errorf("can not reindent %#v", v)
 		}

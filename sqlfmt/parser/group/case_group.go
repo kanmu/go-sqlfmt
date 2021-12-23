@@ -11,6 +11,7 @@ type Case struct {
 	Element        []Reindenter
 	IndentLevel    int
 	hasCommaBefore bool
+	baseReindenter
 }
 
 // Reindent reindents its elements

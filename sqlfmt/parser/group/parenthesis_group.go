@@ -12,6 +12,7 @@ type Parenthesis struct {
 	IndentLevel  int
 	InColumnArea bool
 	ColumnCount  int
+	baseReindenter
 }
 
 // Reindent reindents its elements

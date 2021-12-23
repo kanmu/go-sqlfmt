@@ -10,6 +10,7 @@ import (
 type Insert struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements

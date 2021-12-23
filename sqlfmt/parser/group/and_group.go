@@ -14,6 +14,7 @@ import (
 type AndGroup struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements
@@ -30,6 +31,7 @@ func (a *AndGroup) Reindent(buf *bytes.Buffer) error {
 			el.Reindent(buf)
 		}
 	}
+
 	return nil
 }
 

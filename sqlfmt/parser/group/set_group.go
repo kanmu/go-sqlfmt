@@ -10,11 +10,12 @@ import (
 type Set struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindents its elements
 func (s *Set) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+	s.start = 0
 
 	src, err := processPunctuation(s.Element)
 	if err != nil {
@@ -24,13 +25,14 @@ func (s *Set) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(src) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, s.IndentLevel); err != nil {
+			if err := writeWithComma(buf, v, &s.start, s.IndentLevel); err != nil {
 				return err
 			}
 		case Reindenter:
 			v.Reindent(buf)
 		}
 	}
+
 	return nil
 }
 

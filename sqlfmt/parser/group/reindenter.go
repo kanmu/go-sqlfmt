@@ -11,18 +11,51 @@ import (
 // Reindenter interface
 // specific values of Reindenter would be clause group or token
 type Reindenter interface {
-	Reindent(buf *bytes.Buffer) error
-	IncrementIndentLevel(lev int)
+	Reindent(*bytes.Buffer) error
+	IncrementIndentLevel(int)
+	GetStart() int
 }
 
-// count of ident appearing in column area
-var columnCount int
+type baseReindenter struct {
+	start int
+}
+
+func (g baseReindenter) GetStart() int {
+	return g.start
+}
 
 // to reindent
 const (
 	NewLine          = "\n"
 	WhiteSpace       = " "
 	DoubleWhiteSpace = "  "
+)
+
+var (
+	_ Reindenter = &AndGroup{}
+	_ Reindenter = &Case{}
+	_ Reindenter = &Delete{}
+	_ Reindenter = &From{}
+	_ Reindenter = &Function{}
+	_ Reindenter = &GroupBy{}
+	_ Reindenter = &Having{}
+	_ Reindenter = &Insert{}
+	_ Reindenter = &Join{}
+	_ Reindenter = &LimitClause{}
+	_ Reindenter = &Lock{}
+	_ Reindenter = &OrderBy{}
+	_ Reindenter = &OrGroup{}
+	_ Reindenter = &Parenthesis{}
+	_ Reindenter = &Returning{}
+	_ Reindenter = &Select{}
+	_ Reindenter = &Set{}
+	_ Reindenter = &Subquery{}
+	_ Reindenter = &TieClause{}
+	_ Reindenter = &TypeCast{}
+	_ Reindenter = &Update{}
+	_ Reindenter = &Values{}
+	_ Reindenter = &Where{}
+	_ Reindenter = &With{}
 )
 
 func write(buf *bytes.Buffer, token lexer.Token, indent int) {
@@ -42,7 +75,12 @@ func write(buf *bytes.Buffer, token lexer.Token, indent int) {
 	}
 }
 
-func writeWithComma(buf *bytes.Buffer, v interface{}, indent int) error {
+func writeWithComma(buf *bytes.Buffer, v interface{}, start *int, indent int) error {
+	columnCount := *start
+	defer func() {
+		*start = columnCount
+	}()
+
 	if token, ok := v.(lexer.Token); ok {
 		switch {
 		case token.IsNeedNewLineBefore():
@@ -65,10 +103,16 @@ func writeWithComma(buf *bytes.Buffer, v interface{}, indent int) error {
 		}
 		columnCount++
 	}
+
 	return nil
 }
 
-func writeSelect(buf *bytes.Buffer, el interface{}, indent int) error {
+func writeSelect(buf *bytes.Buffer, el interface{}, start *int, indent int) error {
+	columnCount := *start
+	defer func() {
+		*start = columnCount
+	}()
+
 	if token, ok := el.(lexer.Token); ok {
 		switch token.Type {
 		case lexer.SELECT, lexer.INTO:

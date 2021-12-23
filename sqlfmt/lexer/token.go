@@ -104,43 +104,79 @@ type Token struct {
 // Reindent is a placeholder for implementing Reindenter interface
 func (t Token) Reindent(buf *bytes.Buffer) error { return nil }
 
+// GetStart is a placeholder for implementing Reindenter interface
+func (t Token) GetStart() int { return 0 }
+
 // IncrementIndentLevel is a placeholder implementing Reindenter interface
 func (t Token) IncrementIndentLevel(lev int) {}
 
 // end keywords of each clause
 var (
-	EndOfSelect      = []TokenType{FROM, UNION, EOF}
-	EndOfCase        = []TokenType{END}
-	EndOfFrom        = []TokenType{WHERE, INNER, OUTER, LEFT, RIGHT, JOIN, NATURAL, CROSS, ORDER, GROUP, UNION, OFFSET, LIMIT, FETCH, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
-	EndOfJoin        = []TokenType{WHERE, ORDER, GROUP, LIMIT, OFFSET, FETCH, ANDGROUP, ORGROUP, LEFT, RIGHT, INNER, OUTER, NATURAL, CROSS, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
-	EndOfWhere       = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, ANDGROUP, OR, UNION, EXCEPT, INTERSECT, RETURNING, EOF, ENDPARENTHESIS}
-	EndOfAndGroup    = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, UNION, EXCEPT, INTERSECT, ANDGROUP, ORGROUP, EOF, ENDPARENTHESIS}
-	EndOfOrGroup     = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, UNION, EXCEPT, INTERSECT, ANDGROUP, ORGROUP, EOF, ENDPARENTHESIS}
-	EndOfGroupBy     = []TokenType{ORDER, LIMIT, FETCH, OFFSET, UNION, EXCEPT, INTERSECT, HAVING, EOF, ENDPARENTHESIS}
-	EndOfHaving      = []TokenType{LIMIT, OFFSET, FETCH, ORDER, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
-	EndOfOrderBy     = []TokenType{LIMIT, FETCH, OFFSET, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
+	EndOfSelect,
+	EndOfCase,
+	EndOfFrom,
+	EndOfJoin,
+	EndOfWhere,
+	EndOfAndGroup,
+	EndOfOrGroup,
+	EndOfGroupBy,
+	EndOfHaving,
+	EndOfOrderBy,
+	EndOfLimitClause,
+	EndOfParenthesis,
+	EndOfTieClause,
+	EndOfUpdate,
+	EndOfSet,
+	EndOfReturning,
+	EndOfDelete,
+	EndOfInsert,
+	EndOfValues,
+	EndOfFunction,
+	EndOfTypeCast,
+	EndOfLock,
+	EndOfWith []TokenType
+)
+
+func init() {
+	EndOfSelect = []TokenType{FROM, UNION, EOF}
+	EndOfCase = []TokenType{END}
+	EndOfFrom = []TokenType{WHERE, INNER, OUTER, LEFT, RIGHT, JOIN, NATURAL, CROSS, ORDER, GROUP, UNION, OFFSET, LIMIT, FETCH, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
+	EndOfJoin = []TokenType{WHERE, ORDER, GROUP, LIMIT, OFFSET, FETCH, ANDGROUP, ORGROUP, LEFT, RIGHT, INNER, OUTER, NATURAL, CROSS, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
+	EndOfWhere = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, ANDGROUP, OR, UNION, EXCEPT, INTERSECT, RETURNING, EOF, ENDPARENTHESIS}
+	EndOfAndGroup = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, UNION, EXCEPT, INTERSECT, ANDGROUP, ORGROUP, EOF, ENDPARENTHESIS}
+	EndOfOrGroup = []TokenType{GROUP, ORDER, LIMIT, OFFSET, FETCH, UNION, EXCEPT, INTERSECT, ANDGROUP, ORGROUP, EOF, ENDPARENTHESIS}
+	EndOfGroupBy = []TokenType{ORDER, LIMIT, FETCH, OFFSET, UNION, EXCEPT, INTERSECT, HAVING, EOF, ENDPARENTHESIS}
+	EndOfHaving = []TokenType{LIMIT, OFFSET, FETCH, ORDER, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
+	EndOfOrderBy = []TokenType{LIMIT, FETCH, OFFSET, UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfLimitClause = []TokenType{UNION, EXCEPT, INTERSECT, EOF, ENDPARENTHESIS}
 	EndOfParenthesis = []TokenType{ENDPARENTHESIS}
-	EndOfTieClause   = []TokenType{SELECT}
-	EndOfUpdate      = []TokenType{WHERE, SET, RETURNING, EOF}
-	EndOfSet         = []TokenType{WHERE, RETURNING, EOF}
-	EndOfReturning   = []TokenType{EOF}
-	EndOfDelete      = []TokenType{WHERE, FROM, EOF}
-	EndOfInsert      = []TokenType{VALUES, EOF}
-	EndOfValues      = []TokenType{UPDATE, RETURNING, EOF}
-	EndOfFunction    = []TokenType{ENDPARENTHESIS}
-	EndOfTypeCast    = []TokenType{ENDPARENTHESIS}
-	EndOfLock        = []TokenType{EOF}
-	EndOfWith        = []TokenType{EOF}
-)
+	EndOfTieClause = []TokenType{SELECT}
+	EndOfUpdate = []TokenType{WHERE, SET, RETURNING, EOF}
+	EndOfSet = []TokenType{WHERE, RETURNING, EOF}
+	EndOfReturning = []TokenType{EOF}
+	EndOfDelete = []TokenType{WHERE, FROM, EOF}
+	EndOfInsert = []TokenType{VALUES, EOF}
+	EndOfValues = []TokenType{UPDATE, RETURNING, EOF}
+	EndOfFunction = []TokenType{ENDPARENTHESIS}
+	EndOfTypeCast = []TokenType{ENDPARENTHESIS}
+	EndOfLock = []TokenType{EOF}
+	EndOfWith = []TokenType{EOF}
+}
 
 // token types that contain the keyword to make subGroup
 var (
-	TokenTypesOfGroupMaker = []TokenType{SELECT, CASE, FROM, WHERE, ORDER, GROUP, LIMIT, ANDGROUP, ORGROUP, HAVING, UNION, EXCEPT, INTERSECT, FUNCTION, STARTPARENTHESIS, TYPE}
-	TokenTypesOfJoinMaker  = []TokenType{JOIN, INNER, OUTER, LEFT, RIGHT, NATURAL, CROSS}
-	TokenTypeOfTieClause   = []TokenType{UNION, INTERSECT, EXCEPT}
-	TokenTypeOfLimitClause = []TokenType{LIMIT, FETCH, OFFSET}
+	TokenTypesOfGroupMaker,
+	TokenTypesOfJoinMaker,
+	TokenTypeOfTieClause,
+	TokenTypeOfLimitClause []TokenType
 )
+
+func init() {
+	TokenTypesOfGroupMaker = []TokenType{SELECT, CASE, FROM, WHERE, ORDER, GROUP, LIMIT, ANDGROUP, ORGROUP, HAVING, UNION, EXCEPT, INTERSECT, FUNCTION, STARTPARENTHESIS, TYPE}
+	TokenTypesOfJoinMaker = []TokenType{JOIN, INNER, OUTER, LEFT, RIGHT, NATURAL, CROSS}
+	TokenTypeOfTieClause = []TokenType{UNION, INTERSECT, EXCEPT}
+	TokenTypeOfLimitClause = []TokenType{LIMIT, FETCH, OFFSET}
+}
 
 // IsJoinStart determines if ttype is included in TokenTypesOfJoinMaker
 func (t Token) IsJoinStart() bool {

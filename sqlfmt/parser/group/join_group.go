@@ -10,6 +10,7 @@ import (
 type Join struct {
 	Element     []Reindenter
 	IndentLevel int
+	baseReindenter
 }
 
 // Reindent reindent its elements
