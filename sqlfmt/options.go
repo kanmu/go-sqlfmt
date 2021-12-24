@@ -1,16 +1,31 @@
 package sqlfmt
 
+import "github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
+
 type (
 	Option func(*options)
 
 	// options for go-sqlfmt
 	options struct {
-		Distance   int
-		IsRawSQL   bool
-		Colorized  bool
-		LowerCased bool
+		Distance     int
+		IsRawSQL     bool
+		Colorized    bool
+		LowerCased   bool
+		lexerOptions []lexer.Option
 	}
 )
+
+func (o *options) ToLexerOptions() []lexer.Option {
+	lexerOptions := o.lexerOptions
+	if o.Colorized {
+		lexerOptions = append(lexerOptions, lexer.Colorized())
+	}
+	if o.LowerCased {
+		lexerOptions = append(lexerOptions, lexer.LowerCased())
+	}
+
+	return lexerOptions
+}
 
 func defaultOptions(opts ...Option) *options {
 	o := &options{
@@ -55,5 +70,12 @@ func WithColorized(enabled bool) Option {
 func WithLowerCased(enabled bool) Option {
 	return func(opts *options) {
 		opts.LowerCased = enabled
+	}
+}
+
+// WithLexerOptions sets some lexer options (e.g. formatting, ...)
+func WithLexerOptions(lexerOptions ...lexer.Option) Option {
+	return func(opts *options) {
+		lexerOptions = lexerOptions
 	}
 }

@@ -19,15 +19,7 @@ import (
 func Format(src string, opts ...Option) (string, error) {
 	o := defaultOptions(opts...)
 
-	var tokenFormattingOptions []lexer.Option
-	if o.Colorized {
-		tokenFormattingOptions = append(tokenFormattingOptions, lexer.Colorized())
-	}
-	if o.LowerCased {
-		tokenFormattingOptions = append(tokenFormattingOptions, lexer.LowerCased())
-	}
-
-	t := lexer.NewTokenizer(src, tokenFormattingOptions...)
+	t := lexer.NewTokenizer(src, o.ToLexerOptions()...)
 	tokens, err := t.GetTokens()
 	if err != nil {
 		return src, errors.Wrap(err, "Tokenize failed")
