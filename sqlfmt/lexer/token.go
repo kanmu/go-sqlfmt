@@ -123,16 +123,11 @@ func (t Token) formatKeyword() string {
 		in = t.recaser(in)
 	}
 
-	// TODO: colorizer by token type for prettier output (functions, keywords, etc)
 	if t.colorizer != nil {
-		in = t.colorizer(in)
+		in = t.colorizer(t.Type, in)
 	}
 
 	return in
-}
-
-func (t Token) formatIdent() string {
-	return t.Value
 }
 
 func (t Token) formatPunctuation() string {
@@ -155,9 +150,6 @@ func (t Token) FormattedValue() string {
 		ANDGROUP,
 		ORGROUP:
 		return t.formatPunctuation()
-	case IDENT, // field or table name
-		STRING: // values surrounded with single quotes
-		return t.formatIdent()
 	default:
 		return t.formatKeyword()
 	}

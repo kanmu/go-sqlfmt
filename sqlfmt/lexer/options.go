@@ -10,11 +10,14 @@ type (
 	// TokenFormatter knows how to format a token
 	TokenFormatter func(string) string
 
+	// TokenTypeFormatter knows how to format a token by its type
+	TokenTypeFormatter func(TokenType, string) string
+
 	// Option for token formatting
 	Option func(*options)
 
 	options struct {
-		colorizer TokenFormatter
+		colorizer TokenTypeFormatter
 		recaser   TokenFormatter
 	}
 )
@@ -30,7 +33,7 @@ func defaultOptions(opts ...Option) *options {
 }
 
 // WithColorizer sets an arbitrary token formatter as colorizer
-func WithColorizer(colorizer TokenFormatter) Option {
+func WithColorizer(colorizer TokenTypeFormatter) Option {
 	return func(opt *options) {
 		opt.colorizer = colorizer
 	}
@@ -46,7 +49,19 @@ func WithRecaser(recaser TokenFormatter) Option {
 // Colorized is the default colorizer, with SQL keywords in yellow
 func Colorized() Option {
 	return func(opt *options) {
-		opt.colorizer = func(in string) string { return color.YellowString(in) }
+		opt.colorizer = func(tokenType TokenType, in string) string {
+			switch tokenType {
+			case IDENT, // field or table name
+				STRING: // values surrounded with single quotes
+				return color.HiGreenString(in)
+			case FUNCTION:
+				return color.CyanString(in)
+			case TYPE:
+				return color.MagentaString(in)
+			default:
+				return color.YellowString(in)
+			}
+		}
 	}
 }
 
