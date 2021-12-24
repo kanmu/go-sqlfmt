@@ -1,6 +1,6 @@
 package group
 
-// OrGroup clause
+// OrGroup clause.
 type OrGroup struct {
 	elementReindenter
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// separate elements by comma and the reserved word in select clause
+// separate elements by comma and the reserved word in select clause.
 func separate(rs []Reindenter) []interface{} {
 	var (
 		result           []interface{}
@@ -19,23 +19,20 @@ func separate(rs []Reindenter) []interface{} {
 	buf := &bytes.Buffer{}
 
 	for _, r := range rs {
-		if token, ok := r.(lexer.Token); !ok {
-			if buf.String() != "" {
-				result = append(result, buf.String())
-				buf.Reset()
-			}
-			result = append(result, r)
-		} else {
+		switch token := r.(type) {
+		case lexer.Token:
 			switch {
 			case skipRange > 0:
 				skipRange--
-				// TODO: more elegant
+
 			case token.IsKeyWordInSelect():
+				// TODO: more elegant
 				if buf.String() != "" {
 					result = append(result, buf.String())
 					buf.Reset()
 				}
 				result = append(result, token)
+
 			case token.Type == lexer.COMMA:
 				if buf.String() != "" {
 					result = append(result, buf.String())
@@ -43,27 +40,39 @@ func separate(rs []Reindenter) []interface{} {
 				result = append(result, token)
 				buf.Reset()
 				count = 0
+
 			case strings.HasPrefix(token.FormattedValue(), "::"):
 				buf.WriteString(token.FormattedValue())
+
 			default:
 				if count == 0 {
 					buf.WriteString(token.FormattedValue())
 				} else {
 					buf.WriteString(WhiteSpace + token.FormattedValue())
 				}
+
 				count++
 			}
+
+		default:
+			if buf.String() != "" {
+				result = append(result, buf.String())
+				buf.Reset()
+			}
+			result = append(result, r)
 		}
 	}
+
 	// append the last element in buf
 	if buf.String() != "" {
 		result = append(result, buf.String())
 	}
+
 	return result
 }
 
 // process bracket, singlequote and brace
-// TODO: more elegant
+// TODO: more elegant.
 func processPunctuation(rs []Reindenter) ([]Reindenter, error) {
 	var (
 		result    []Reindenter
@@ -96,7 +105,7 @@ func processPunctuation(rs []Reindenter) ([]Reindenter, error) {
 	return result, nil
 }
 
-// returns surrounding area including punctuation such as {xxx, xxx}
+// returns surrounding area including punctuation such as {xxx, xxx}.
 func extractSurroundingArea(rs []Reindenter) (string, int, error) {
 	var (
 		countOfStart int
@@ -133,5 +142,6 @@ func extractSurroundingArea(rs []Reindenter) (string, int, error) {
 			return "", -1, errors.New("group type is not supposed be here")
 		}
 	}
+
 	return result, skipRange, nil
 }

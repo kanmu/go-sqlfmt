@@ -4,7 +4,7 @@ import (
 	"bytes"
 )
 
-// Token types
+// Token types.
 //
 //
 const (
@@ -94,23 +94,23 @@ const (
 	SURROUNDING
 )
 
-// TokenType is an alias type that represents a kind of token
+// TokenType is an alias type that represents a kind of token.
 type TokenType int
 
-// Token is a token struct
+// Token is a token struct.
 type Token struct {
 	Type  TokenType
 	Value string
 	*options
 }
 
-// Reindent is a placeholder for implementing Reindenter interface
+// Reindent is a placeholder for implementing Reindenter interface.
 func (t Token) Reindent(buf *bytes.Buffer) error { return nil }
 
-// GetStart is a placeholder for implementing Reindenter interface
+// GetStart is a placeholder for implementing Reindenter interface.
 func (t Token) GetStart() int { return 0 }
 
-// IncrementIndentLevel is a placeholder implementing Reindenter interface
+// IncrementIndentLevel is a placeholder implementing Reindenter interface.
 func (t Token) IncrementIndentLevel(lev int) {}
 
 func (t Token) formatKeyword() string {
@@ -134,7 +134,7 @@ func (t Token) formatPunctuation() string {
 	return t.Value
 }
 
-// FormattedValue returns the token with some formatting options
+// FormattedValue returns the token with some formatting options.
 func (t Token) FormattedValue() string {
 	switch t.Type {
 	case EOF,
@@ -155,7 +155,7 @@ func (t Token) FormattedValue() string {
 	}
 }
 
-// end keywords of each clause
+// end keywords of each clause.
 var (
 	EndOfSelect      []TokenType
 	EndOfCase        []TokenType
@@ -208,7 +208,7 @@ func init() {
 	EndOfWith = []TokenType{EOF}
 }
 
-// token types that contain the keyword to make subGroup
+// token types that contain the keyword to make subGroup.
 var (
 	TokenTypesOfGroupMaker []TokenType
 	TokenTypesOfJoinMaker  []TokenType
@@ -223,37 +223,40 @@ func init() {
 	TokenTypeOfLimitClause = []TokenType{LIMIT, FETCH, OFFSET}
 }
 
-// IsJoinStart determines if ttype is included in TokenTypesOfJoinMaker
+// IsJoinStart determines if ttype is included in TokenTypesOfJoinMaker.
 func (t Token) IsJoinStart() bool {
 	for _, v := range TokenTypesOfJoinMaker {
 		if t.Type == v {
 			return true
 		}
 	}
+
 	return false
 }
 
-// IsTieClauseStart determines if ttype is included in TokenTypesOfTieClause
+// IsTieClauseStart determines if ttype is included in TokenTypesOfTieClause.
 func (t Token) IsTieClauseStart() bool {
 	for _, v := range TokenTypeOfTieClause {
 		if t.Type == v {
 			return true
 		}
 	}
+
 	return false
 }
 
-// IsLimitClauseStart determines ttype is included in TokenTypesOfLimitClause
+// IsLimitClauseStart determines ttype is included in TokenTypesOfLimitClause.
 func (t Token) IsLimitClauseStart() bool {
 	for _, v := range TokenTypeOfLimitClause {
 		if t.Type == v {
 			return true
 		}
 	}
+
 	return false
 }
 
-// IsNeedNewLineBefore returns true if token needs new line before written in buffer
+// IsNeedNewLineBefore returns true if token needs new line before written in buffer.
 func (t Token) IsNeedNewLineBefore() bool {
 	var ttypes = []TokenType{SELECT, UPDATE, INSERT, DELETE, ANDGROUP, FROM, GROUP, ORGROUP, ORDER, HAVING, LIMIT, OFFSET, FETCH, RETURNING, SET, UNION, INTERSECT, EXCEPT, VALUES, WHERE, ON, USING, UNION, EXCEPT, INTERSECT}
 	for _, v := range ttypes {
@@ -261,10 +264,11 @@ func (t Token) IsNeedNewLineBefore() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
-// IsKeyWordInSelect returns true if token is a keyword in select group
+// IsKeyWordInSelect returns true if token is a keyword in select group.
 func (t Token) IsKeyWordInSelect() bool {
 	return t.Type == SELECT || t.Type == EXISTS || t.Type == DISTINCT || t.Type == DISTINCTROW || t.Type == INTO || t.Type == AS || t.Type == GROUP || t.Type == ORDER || t.Type == BY || t.Type == ON || t.Type == RETURNING || t.Type == SET || t.Type == UPDATE
 }

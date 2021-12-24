@@ -1,6 +1,6 @@
 package group
 
-// TieClause such as UNION, EXCEPT, INTERSECT
+// TieClause such as UNION, EXCEPT, INTERSECT.
 type TieClause struct {
 	elementReindenter
 }

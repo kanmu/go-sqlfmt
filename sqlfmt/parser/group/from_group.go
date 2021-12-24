@@ -1,6 +1,6 @@
 package group
 
-// From clause
+// From clause.
 type From struct {
 	elementReindenter
 }

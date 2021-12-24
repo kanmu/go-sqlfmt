@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Tokenizer tokenizes SQL statements
+// Tokenizer tokenizes SQL statements.
 type Tokenizer struct {
 	r      *bufio.Reader
 	w      *bytes.Buffer // w  writes token value. It resets its value when the end of token appears
@@ -16,15 +16,19 @@ type Tokenizer struct {
 	*options
 }
 
+const (
+	ErrEOF = "EOF"
+)
+
 // rune that can't be contained in SQL statement
-// TODO: I have to make better solution of making rune of eof in stead of using '∂'
+// TODO: I have to make better solution of making rune of eof in stead of using '∂'.
 var eof rune
 
 func init() {
 	eof = '∂'
 }
 
-// value of literal
+// value of literal.
 const (
 	Comma            = ","
 	StartParenthesis = "("
@@ -37,7 +41,7 @@ const (
 	NewLine          = "\n"
 )
 
-// NewTokenizer creates Tokenizer
+// NewTokenizer creates Tokenizer.
 func NewTokenizer(src string, opts ...Option) *Tokenizer {
 	return &Tokenizer{
 		r:       bufio.NewReader(strings.NewReader(src)),
@@ -46,14 +50,14 @@ func NewTokenizer(src string, opts ...Option) *Tokenizer {
 	}
 }
 
-// GetTokens returns tokens for parsing
+// GetTokens returns tokens for parsing.
 func (t *Tokenizer) GetTokens() ([]Token, error) {
-	var result []Token
-
 	tokens, err := t.Tokenize()
 	if err != nil {
 		return nil, errors.Wrap(err, "Tokenize failed")
 	}
+
+	result := make([]Token, 0, len(tokens))
 
 	// replace all tokens without whitespaces and new lines
 	// if "AND" or "OR" appears after new line, token value will be ANDGROUP, ORGROUP
@@ -83,7 +87,7 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 }
 
 // Tokenize analyses every rune in SQL statement
-// every token is identified when whitespace appears
+// every token is identified when whitespace appears.
 func (t *Tokenizer) Tokenize() ([]Token, error) {
 	for {
 		isEOF, err := t.scan()
@@ -100,7 +104,7 @@ func (t *Tokenizer) Tokenize() ([]Token, error) {
 	return t.result, nil
 }
 
-// unread undoes t.r.readRune method to get last character
+// unread undoes t.r.readRune method to get last character.
 func (t *Tokenizer) unread() { _ = t.r.UnreadRune() }
 
 func isWhiteSpace(ch rune) bool {
@@ -140,11 +144,11 @@ func isEndBrace(ch rune) bool {
 }
 
 // scan scans each character and appends to result until "eof" appears
-// when it finishes scanning all characters, it returns true
+// when it finishes scanning all characters, it returns true.
 func (t *Tokenizer) scan() (bool, error) {
 	ch, _, err := t.r.ReadRune()
 	if err != nil {
-		if err.Error() != "EOF" {
+		if err.Error() != ErrEOF {
 			return false, errors.Wrap(err, "read rune failed")
 		}
 
@@ -220,7 +224,7 @@ func (t *Tokenizer) scanWhiteSpace() error {
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
-			if err.Error() == "EOF" {
+			if err.Error() == ErrEOF {
 				break
 			} else {
 				return err
@@ -229,6 +233,7 @@ func (t *Tokenizer) scanWhiteSpace() error {
 
 		if !isWhiteSpace(ch) {
 			t.unread()
+
 			break
 		} else {
 			t.w.WriteRune(ch)
@@ -248,7 +253,7 @@ func (t *Tokenizer) scanWhiteSpace() error {
 	return nil
 }
 
-// scan string token including single quotes
+// scan string token including single quotes.
 func (t *Tokenizer) scanString() error {
 	var counter int
 	t.unread()
@@ -256,7 +261,7 @@ func (t *Tokenizer) scanString() error {
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
-			if err.Error() == "EOF" {
+			if err.Error() == ErrEOF {
 				break
 			} else {
 				return err
@@ -266,6 +271,7 @@ func (t *Tokenizer) scanString() error {
 		// ignore the first single quote
 		if counter != 0 && isSingleQuote(ch) {
 			t.w.WriteRune(ch)
+
 			break
 		} else {
 			t.w.WriteRune(ch)
@@ -281,7 +287,7 @@ func (t *Tokenizer) scanString() error {
 }
 
 // append all ch to result until ch is a white space
-// if ident is keyword, Type will be the keyword and value will be the uppercase keyword
+// if ident is keyword, Type will be the keyword and value will be the uppercase keyword.
 func (t *Tokenizer) scanIdent() error {
 	t.unread()
 
@@ -289,7 +295,7 @@ LOOP:
 	for {
 		ch, _, err := t.r.ReadRune()
 		if err != nil {
-			if err.Error() == "EOF" {
+			if err.Error() == ErrEOF {
 				break
 			} else {
 				return err
@@ -298,30 +304,39 @@ LOOP:
 		switch {
 		case isWhiteSpace(ch):
 			t.unread()
+
 			break LOOP
 		case isComma(ch):
 			t.unread()
+
 			break LOOP
 		case isStartParenthesis(ch):
 			t.unread()
+
 			break LOOP
 		case isEndParenthesis(ch):
 			t.unread()
+
 			break LOOP
 		case isSingleQuote(ch):
 			t.unread()
+
 			break LOOP
 		case isStartBracket(ch):
 			t.unread()
+
 			break LOOP
 		case isEndBracket(ch):
 			t.unread()
+
 			break LOOP
 		case isStartBrace(ch):
 			t.unread()
+
 			break LOOP
 		case isEndBrace(ch):
 			t.unread()
+
 			break LOOP
 		default:
 			t.w.WriteRune(ch)
@@ -359,9 +374,11 @@ func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
 	} else if ttype, ok := typeWithParenMap[v]; ok {
 		if r, _, err := t.r.ReadRune(); err == nil && string(r) == StartParenthesis {
 			t.unread()
+
 			return ttype, ok
 		}
 		t.unread()
+
 		return IDENT, ok
 	}
 

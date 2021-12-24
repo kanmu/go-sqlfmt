@@ -1,6 +1,6 @@
 package group
 
-// LimitClause such as LIMIT, OFFSET, FETCH FIRST
+// LimitClause such as LIMIT, OFFSET, FETCH FIRST.
 type LimitClause struct {
 	elementReindenter
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Lock clause
+// Lock clause.
 type Lock struct {
 	elementReindenter
 }
@@ -18,7 +18,7 @@ func NewLock(element []Reindenter, opts ...Option) *Lock {
 	}
 }
 
-// Reindent reindent its elements
+// Reindent reindent its elements.
 func (l *Lock) Reindent(buf *bytes.Buffer) error {
 	elements, err := l.processPunctuation()
 	if err != nil {

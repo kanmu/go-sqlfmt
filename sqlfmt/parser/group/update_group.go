@@ -6,7 +6,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Update clause
+// Update clause.
 type Update struct {
 	elementReindenter
 }
@@ -17,7 +17,7 @@ func NewUpdate(element []Reindenter, opts ...Option) *Update {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (u *Update) Reindent(buf *bytes.Buffer) error {
 	u.start = 0
 
@@ -29,7 +29,7 @@ func (u *Update) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if erw := writeWithComma(buf, v, &u.start, u.IndentLevel); erw != nil {
+			if erw := u.writeWithComma(buf, v, u.IndentLevel); erw != nil {
 				return erw
 			}
 		case Reindenter:

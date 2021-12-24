@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Process formats SQL statement in .go file or sql files
+// Process formats SQL statement in .go file or sql files.
 func Process(filename string, src []byte, opts ...Option) ([]byte, error) {
 	o := defaultOptions(opts...)
 
@@ -43,6 +43,7 @@ func Process(filename string, src []byte, opts ...Option) ([]byte, error) {
 	if err != nil {
 		return nil, formatErr(errors.Wrap(err, "format.Source failed"))
 	}
+
 	return out, nil
 }
 

@@ -1,6 +1,6 @@
 package group
 
-// Values clause
+// Values clause.
 type Values struct {
 	elementReindenter
 }

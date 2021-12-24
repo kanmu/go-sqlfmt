@@ -6,7 +6,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// OrderBy clause
+// OrderBy clause.
 type OrderBy struct {
 	elementReindenter
 }
@@ -17,7 +17,7 @@ func NewOrderBy(element []Reindenter, opts ...Option) *OrderBy {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
 	o.start = 0
 
@@ -29,7 +29,7 @@ func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(element) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if erw := writeWithComma(buf, v, &o.start, o.IndentLevel); erw != nil {
+			if erw := o.writeWithComma(buf, v, o.IndentLevel); erw != nil {
 				return erw
 			}
 		case Reindenter:
@@ -38,5 +38,6 @@ func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
 			}
 		}
 	}
+
 	return nil
 }

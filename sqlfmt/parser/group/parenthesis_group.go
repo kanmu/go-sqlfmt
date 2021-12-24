@@ -8,7 +8,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Parenthesis clause
+// Parenthesis clause.
 type Parenthesis struct {
 	elementReindenter
 	InColumnArea bool
@@ -21,7 +21,7 @@ func NewParenthesis(element []Reindenter, opts ...Option) *Parenthesis {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (p *Parenthesis) Reindent(buf *bytes.Buffer) error {
 	var hasStartBefore bool
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	stderrors "errors"
 	"flag"
 	"fmt"
 	"io"
@@ -12,9 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/fredbi/go-sqlfmt/sqlfmt"
+	"github.com/pkg/errors"
 )
 
 func isGoFile(info os.FileInfo) bool {
@@ -197,10 +197,9 @@ func diff(b1, b2 []byte) ([]byte, error) {
 }
 
 func processError(err error) {
-	switch err.(type) {
-	case *sqlfmt.FormatError:
+	if stderrors.Is(err, &sqlfmt.FormatError{}) {
 		log.Println(err)
-	default:
+	} else {
 		log.Fatal(err)
 	}
 }

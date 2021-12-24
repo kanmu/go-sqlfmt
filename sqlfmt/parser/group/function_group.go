@@ -8,7 +8,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Function clause
+// Function clause.
 type Function struct {
 	elementReindenter
 	InColumnArea bool
@@ -21,24 +21,26 @@ func NewFunction(element []Reindenter, opts ...Option) *Function {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (f *Function) Reindent(buf *bytes.Buffer) error {
 	elements, err := f.processPunctuation()
 	if err != nil {
 		return err
 	}
 
+	prevToken := func(i int) (prev lexer.Token) {
+		if i > 0 {
+			if preToken, ok := elements[i-1].(lexer.Token); ok {
+				prev = preToken
+			}
+		}
+
+		return
+	}
+
 	for i, el := range elements {
 		if token, ok := el.(lexer.Token); ok {
-			var prev lexer.Token
-
-			if i > 0 {
-				if preToken, ok := elements[i-1].(lexer.Token); ok {
-					prev = preToken
-				}
-			}
-
-			f.writeFunction(buf, token, prev, f.IndentLevel)
+			f.writeFunction(buf, token, prevToken(i), f.IndentLevel)
 		} else {
 			if eri := el.Reindent(buf); eri != nil {
 				return eri

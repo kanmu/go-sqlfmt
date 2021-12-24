@@ -7,13 +7,13 @@ import (
 )
 
 type (
-	// TokenFormatter knows how to format a token
+	// TokenFormatter knows how to format a token.
 	TokenFormatter func(string) string
 
-	// TokenTypeFormatter knows how to format a token by its type
+	// TokenTypeFormatter knows how to format a token by its type.
 	TokenTypeFormatter func(TokenType, string) string
 
-	// Option for token formatting
+	// Option for token formatting.
 	Option func(*options)
 
 	options struct {
@@ -32,21 +32,21 @@ func defaultOptions(opts ...Option) *options {
 	return o
 }
 
-// WithColorizer sets an arbitrary token formatter as colorizer
+// WithColorizer sets an arbitrary token formatter as colorizer.
 func WithColorizer(colorizer TokenTypeFormatter) Option {
 	return func(opt *options) {
 		opt.colorizer = colorizer
 	}
 }
 
-// WithRecaser sets an arbitrary token formatter as recaser
+// WithRecaser sets an arbitrary token formatter as recaser.
 func WithRecaser(recaser TokenFormatter) Option {
 	return func(opt *options) {
 		opt.recaser = recaser
 	}
 }
 
-// Colorized is the default colorizer, with SQL keywords in yellow
+// Colorized is the default colorizer, with SQL keywords in yellow.
 func Colorized() Option {
 	return func(opt *options) {
 		opt.colorizer = func(tokenType TokenType, in string) string {
@@ -65,7 +65,7 @@ func Colorized() Option {
 	}
 }
 
-// LowerCased normalizes all SQL keywords as lower case
+// LowerCased normalizes all SQL keywords as lower case.
 func LowerCased() Option {
 	return func(opt *options) {
 		opt.recaser = strings.ToLower

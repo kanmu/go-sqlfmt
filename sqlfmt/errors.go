@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// FormatError is an error that occurred while sqlfmt.Process
+// FormatError is an error that occurred while sqlfmt.Process.
 type FormatError struct {
 	msg string
 }

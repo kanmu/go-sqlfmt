@@ -7,7 +7,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// TypeCast group
+// TypeCast group.
 type TypeCast struct {
 	elementReindenter
 }
@@ -18,7 +18,7 @@ func NewTypeCast(element []Reindenter, opts ...Option) *TypeCast {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (t *TypeCast) Reindent(buf *bytes.Buffer) error {
 	elements, err := t.processPunctuation()
 	if err != nil {
@@ -33,7 +33,11 @@ func (t *TypeCast) writeTypeCast(buf *bytes.Buffer, token lexer.Token, _ int) er
 	case lexer.TYPE:
 		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	case lexer.COMMA:
-		buf.WriteString(fmt.Sprintf("%s%s", token.FormattedValue(), WhiteSpace))
+		buf.WriteString(fmt.Sprintf(
+			"%s%s",
+			token.FormattedValue(),
+			WhiteSpace,
+		))
 	default:
 		buf.WriteString(token.FormattedValue())
 	}

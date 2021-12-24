@@ -4,7 +4,7 @@ package group
 // AndGroup is made after new line
 //// select xxx and xxx  <= this is not AndGroup
 //// select xxx from xxx where xxx
-//// and xxx      <= this is AndGroup
+//// and xxx      <= this is AndGroup.
 type AndGroup struct {
 	elementReindenter
 }

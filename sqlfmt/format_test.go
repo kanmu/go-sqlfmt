@@ -2,6 +2,8 @@ package sqlfmt
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCompare(t *testing.T) {
@@ -19,12 +21,13 @@ func TestCompare(t *testing.T) {
 	}
 }
 
-func TestRemove(t *testing.T) {
-	got := removeSpace("select xxx from xxx")
-	want := "selectxxxfromxxx"
-	if got != want {
-		t.Errorf("want %#v, got %#v", want, got)
-	}
+func TestRemoveSpace(t *testing.T) {
+	const (
+		input    = "select xxx from xxx"
+		expected = "selectxxxfromxxx"
+	)
+
+	require.Equal(t, expected, removeSpace(input))
 }
 
 func TestFormat(t *testing.T) {

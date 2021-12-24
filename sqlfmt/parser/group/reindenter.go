@@ -8,31 +8,71 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Reindenter interface
-// specific values of Reindenter would be clause group or token
-type Reindenter interface {
-	Reindent(*bytes.Buffer) error
-	IncrementIndentLevel(int)
-	GetStart() int
-}
+type (
+	// Reindenter interface
+	// specific values of Reindenter would be clause group or token.
+	Reindenter interface {
+		Reindent(*bytes.Buffer) error
+		IncrementIndentLevel(int)
+		GetStart() int
+	}
 
-type baseReindenter struct {
-	IndentLevel int
-	start       int
-}
+	baseReindenter struct {
+		start int
+		*options
+	}
+
+	elementReindenter struct {
+		Element []Reindenter
+		baseReindenter
+	}
+)
 
 func (g baseReindenter) GetStart() int {
 	return g.start
 }
 
-// IncrementIndentLevel increments by its specified indent level
+// GetOpts retrieves options. This is useful for comparing types when testing.
+func (g *baseReindenter) GetOpts() []Option {
+	if g.options == nil {
+		return nil
+	}
+
+	return []Option{
+		WithIndentLevel(g.options.IndentLevel),
+		WithCommaStyle(g.options.commaStyle),
+	}
+}
+
+// SetOpts sets options. This is useful for comparing types when testing.
+func (g *baseReindenter) SetOpts(opts ...Option) {
+	g.options = defaultOptions(opts...)
+}
+
+// IncrementIndentLevel increments by its specified indent level.
 func (g *baseReindenter) IncrementIndentLevel(lev int) {
 	g.IndentLevel += lev
 }
 
-type elementReindenter struct {
-	Element []Reindenter
-	baseReindenter
+func (g *baseReindenter) writeComma(buf *bytes.Buffer, token lexer.Token, indent int) {
+	switch g.commaStyle {
+	case CommaStyleRight:
+		buf.WriteString(fmt.Sprintf(
+			"%s%s%s%s",
+			token.FormattedValue(),
+			NewLine,
+			strings.Repeat(DoubleWhiteSpace, indent),
+			WhiteSpace,
+		))
+	default:
+		buf.WriteString(fmt.Sprintf(
+			"%s%s%s%s",
+			NewLine,
+			strings.Repeat(DoubleWhiteSpace, indent),
+			DoubleWhiteSpace,
+			token.FormattedValue(),
+		))
+	}
 }
 
 func newElementReindenter(element []Reindenter, opts ...Option) elementReindenter {
@@ -41,7 +81,7 @@ func newElementReindenter(element []Reindenter, opts ...Option) elementReindente
 	return elementReindenter{
 		Element: element,
 		baseReindenter: baseReindenter{
-			IndentLevel: o.indentLevel,
+			options: o,
 		},
 	}
 }
@@ -75,7 +115,7 @@ func (e *elementReindenter) elementsTokenApply(
 	return nil
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (e *elementReindenter) Reindent(buf *bytes.Buffer) error {
 	elements, err := e.processPunctuation()
 	if err != nil {
@@ -85,11 +125,42 @@ func (e *elementReindenter) Reindent(buf *bytes.Buffer) error {
 	return e.elementsTokenApply(elements, buf, write)
 }
 
-func (e *elementReindenter) writeTokenWithComma(buf *bytes.Buffer, token lexer.Token, indent int) error {
-	return writeWithComma(buf, token, &e.start, indent)
+func (e *elementReindenter) writeWithComma(buf *bytes.Buffer, v interface{}, indent int) error {
+	columnCount := e.start
+	defer func() {
+		e.start = columnCount
+	}()
+
+	if token, ok := v.(lexer.Token); ok {
+		switch {
+		case token.IsNeedNewLineBefore():
+			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
+		case token.Type == lexer.BY:
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
+		case token.Type == lexer.COMMA:
+			e.writeComma(buf, token, indent)
+		default:
+			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
+		}
+	} else if str, ok := v.(string); ok {
+		str = strings.TrimRight(str, " ")
+
+		switch {
+		case columnCount == 0:
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
+		case strings.HasPrefix(token.FormattedValue(), "::"):
+			buf.WriteString(str)
+		default:
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
+		}
+
+		columnCount++
+	}
+
+	return nil
 }
 
-// to reindent
+// to reindent.
 const (
 	NewLine          = "\n"
 	WhiteSpace       = " "
@@ -138,41 +209,6 @@ func write(buf *bytes.Buffer, token lexer.Token, indent int) error {
 		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.FormattedValue()))
 	default:
 		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
-	}
-
-	return nil
-}
-
-func writeWithComma(buf *bytes.Buffer, v interface{}, start *int, indent int) error {
-	columnCount := *start
-	defer func() {
-		*start = columnCount
-	}()
-
-	if token, ok := v.(lexer.Token); ok {
-		switch {
-		case token.IsNeedNewLineBefore():
-			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
-		case token.Type == lexer.BY:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
-		case token.Type == lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
-		default:
-			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
-		}
-	} else if str, ok := v.(string); ok {
-		str = strings.TrimRight(str, " ")
-
-		switch {
-		case columnCount == 0:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
-		case strings.HasPrefix(token.FormattedValue(), "::"):
-			buf.WriteString(str)
-		default:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
-		}
-
-		columnCount++
 	}
 
 	return nil

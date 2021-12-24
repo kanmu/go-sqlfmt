@@ -1,6 +1,6 @@
 package group
 
-// Insert clause
+// Insert clause.
 type Insert struct {
 	elementReindenter
 }

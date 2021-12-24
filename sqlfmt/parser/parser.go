@@ -9,8 +9,8 @@ import (
 // TODO: calling each Retrieve function is not smart, so should be refactored
 
 // ParseTokens parses Tokens, creating slice of Reindenter
-// each Reindenter is group of SQL Clause such as SelectGroup, FromGroup ...etc
-func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
+// each Reindenter is group of SQL Clause such as SelectGroup, FromGroup ...etc.
+func ParseTokens(tokens []lexer.Token, opts ...Option) ([]group.Reindenter, error) {
 	if !isSQL(tokens[0].Type) {
 		return nil, errors.New("can not parse no sql statement")
 	}
@@ -25,13 +25,13 @@ func ParseTokens(tokens []lexer.Token) ([]group.Reindenter, error) {
 			break
 		}
 
-		r := NewRetriever(tokens[offset:])
+		r := NewRetriever(tokens[offset:], opts...)
 		element, endIdx, err := r.Retrieve()
 		if err != nil {
 			return nil, errors.Wrap(err, "ParseTokens failed")
 		}
 
-		group := createGroup(element)
+		group := r.createGroup(element)
 		result = append(result, group)
 
 		offset += endIdx

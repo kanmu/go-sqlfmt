@@ -1,15 +1,25 @@
 package group
 
 type (
+	CommaStyle uint8
+
 	Option func(*options)
 
 	options struct {
-		indentLevel int
+		IndentLevel int
+		commaStyle  CommaStyle
 	}
 )
 
+const (
+	CommaStyleLeft CommaStyle = iota
+	CommaStyleRight
+)
+
 func defaultOptions(opts ...Option) *options {
-	o := &options{}
+	o := &options{
+		commaStyle: CommaStyleLeft,
+	}
 
 	for _, apply := range opts {
 		apply(o)
@@ -17,8 +27,15 @@ func defaultOptions(opts ...Option) *options {
 
 	return o
 }
+
 func WithIndentLevel(level int) Option {
 	return func(opts *options) {
-		opts.indentLevel = level
+		opts.IndentLevel = level
+	}
+}
+
+func WithCommaStyle(style CommaStyle) Option {
+	return func(opts *options) {
+		opts.commaStyle = style
 	}
 }

@@ -18,7 +18,7 @@ func NewGroupBy(element []Reindenter, opts ...Option) *GroupBy {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	g.start = 0
 
@@ -30,7 +30,7 @@ func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if erw := writeWithComma(buf, v, &g.start, g.IndentLevel); erw != nil {
+			if erw := g.writeWithComma(buf, v, g.IndentLevel); erw != nil {
 				return erw
 			}
 		case Reindenter:

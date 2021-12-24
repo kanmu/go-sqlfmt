@@ -8,7 +8,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Subquery group
+// Subquery group.
 type Subquery struct {
 	elementReindenter
 	InColumnArea bool
@@ -21,7 +21,7 @@ func NewSubquery(element []Reindenter, opts ...Option) *Subquery {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (s *Subquery) Reindent(buf *bytes.Buffer) error {
 	elements, err := s.processPunctuation()
 	if err != nil {
@@ -43,7 +43,6 @@ func (s *Subquery) Reindent(buf *bytes.Buffer) error {
 	}
 
 	return nil
-
 }
 
 func (s *Subquery) writeSubquery(buf *bytes.Buffer, token lexer.Token, indent int) {

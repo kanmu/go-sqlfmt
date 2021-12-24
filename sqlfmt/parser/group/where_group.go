@@ -1,6 +1,6 @@
 package group
 
-// Where clause
+// Where clause.
 type Where struct {
 	elementReindenter
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/fredbi/go-sqlfmt/sqlfmt"
+	"github.com/fredbi/go-sqlfmt/sqlfmt/parser/group"
 )
 
 type cliOptions struct {
@@ -17,6 +18,7 @@ type cliOptions struct {
 	IsRawSQL   bool
 	Colorized  bool
 	LowerCased bool
+	CommaStyle string
 }
 
 func (o cliOptions) ToOptions() []sqlfmt.Option {
@@ -27,11 +29,21 @@ func (o cliOptions) ToOptions() []sqlfmt.Option {
 	opts = append(opts, sqlfmt.WithColorized(o.Colorized))
 	opts = append(opts, sqlfmt.WithLowerCased(o.LowerCased))
 
+	var style group.CommaStyle
+	if o.CommaStyle == "right" {
+		style = group.CommaStyleRight
+	} else {
+		style = group.CommaStyleLeft
+	}
+	opts = append(opts, sqlfmt.WithCommaStyle(style))
+
 	return opts
 }
 
 func defaultCliOptions() *cliOptions {
-	return &cliOptions{}
+	return &cliOptions{
+		CommaStyle: "left",
+	}
 }
 
 var (
@@ -49,6 +61,7 @@ func init() {
 	flag.BoolVar(&options.IsRawSQL, "raw", defaultCliOptions().IsRawSQL, "parse raw SQL file")
 	flag.BoolVar(&options.Colorized, "colorized", defaultCliOptions().Colorized, "colorize output")
 	flag.BoolVar(&options.LowerCased, "lower", defaultCliOptions().LowerCased, "SQL keywords are lower-cased")
+	flag.StringVar(&options.CommaStyle, "comma-style", defaultCliOptions().CommaStyle, "justify commas to the left or the right [left|right]")
 }
 
 func usage() {

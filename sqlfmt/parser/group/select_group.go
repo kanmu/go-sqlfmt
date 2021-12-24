@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Select clause
+// Select clause.
 type Select struct {
 	elementReindenter
 }
@@ -20,7 +20,7 @@ func NewSelect(element []Reindenter, opts ...Option) *Select {
 	}
 }
 
-// Reindent reindens its elements
+// Reindent reindens its elements.
 func (s *Select) Reindent(buf *bytes.Buffer) error {
 	s.start = 0
 
@@ -36,10 +36,8 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 				return errors.Wrap(erw, "writeSelect failed")
 			}
 		case *Case:
-			if tok, ok := elements[i-1].(lexer.Token); ok {
-				if tok.Type == lexer.COMMA {
-					v.hasCommaBefore = true
-				}
+			if tok, ok := elements[i-1].(lexer.Token); ok && tok.Type == lexer.COMMA {
+				v.hasCommaBefore = true
 			}
 
 			if eri := v.Reindent(buf); eri != nil {
@@ -86,6 +84,7 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 			return fmt.Errorf("can not reindent %#v", v)
 		}
 	}
+
 	return nil
 }
 
@@ -95,7 +94,8 @@ func (s *Select) writeSelect(buf *bytes.Buffer, el interface{}, start *int, inde
 		*start = columnCount
 	}()
 
-	if token, ok := el.(lexer.Token); ok {
+	switch token := el.(type) {
+	case lexer.Token:
 		switch token.Type {
 		case lexer.SELECT, lexer.INTO:
 			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
@@ -105,14 +105,21 @@ func (s *Select) writeSelect(buf *bytes.Buffer, el interface{}, start *int, inde
 			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 			columnCount++
 		case lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
+			s.writeComma(buf, token, indent)
 		default:
 			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
 		}
-	} else if str, ok := el.(string); ok {
-		str = strings.Trim(str, WhiteSpace)
+
+	case string:
+		str := strings.Trim(token, WhiteSpace)
 		if columnCount == 0 {
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
+			buf.WriteString(fmt.Sprintf(
+				"%s%s%s%s",
+				NewLine,
+				strings.Repeat(DoubleWhiteSpace, indent),
+				DoubleWhiteSpace,
+				str,
+			))
 		} else {
 			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
 		}

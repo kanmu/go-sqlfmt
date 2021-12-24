@@ -25,7 +25,7 @@ func Format(src string, opts ...Option) (string, error) {
 		return src, errors.Wrap(err, "Tokenize failed")
 	}
 
-	rs, err := parser.ParseTokens(tokens)
+	rs, err := parser.ParseTokens(tokens, o.ToParserOptions()...)
 	if err != nil {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
@@ -71,7 +71,7 @@ func putDistance(src string, distance int) string {
 	return result
 }
 
-// returns false if the value of formatted statement (without any space) differs from source statement
+// returns false if the value of formatted statement (without any space) differs from source statement.
 func compare(src string, res string) bool {
 	before := removeSpace(src)
 	after := removeSpace(res)
@@ -83,9 +83,10 @@ func compare(src string, res string) bool {
 	return true
 }
 
-// removes whitespaces and new lines from src
+// removes whitespaces and new lines from src.
 func removeSpace(src string) string {
-	var result []rune
+	result := make([]rune, 0, len(src))
+
 	for _, r := range src {
 		if string(r) == "\n" || string(r) == " " || string(r) == "\t" || string(r) == "　" {
 			continue

@@ -8,7 +8,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Join clause
+// Join clause.
 type Join struct {
 	elementReindenter
 }
@@ -19,7 +19,7 @@ func NewJoin(element []Reindenter, opts ...Option) *Join {
 	}
 }
 
-// Reindent reindent its elements
+// Reindent reindent its elements.
 func (j *Join) Reindent(buf *bytes.Buffer) error {
 	elements, err := processPunctuation(j.Element)
 	if err != nil {

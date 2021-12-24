@@ -6,7 +6,7 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Returning clause
+// Returning clause.
 type Returning struct {
 	elementReindenter
 }
@@ -17,7 +17,7 @@ func NewReturning(element []Reindenter, opts ...Option) *Returning {
 	}
 }
 
-// Reindent reindents its elements
+// Reindent reindents its elements.
 func (r *Returning) Reindent(buf *bytes.Buffer) error {
 	elements, err := r.processPunctuation()
 	if err != nil {
@@ -27,7 +27,7 @@ func (r *Returning) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if erw := writeWithComma(buf, v, &r.start, r.IndentLevel); erw != nil {
+			if erw := r.writeWithComma(buf, v, r.IndentLevel); erw != nil {
 				return erw
 			}
 		case Reindenter:

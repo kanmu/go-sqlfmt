@@ -1,6 +1,6 @@
 package group
 
-// With clause
+// With clause.
 type With struct {
 	elementReindenter
 }

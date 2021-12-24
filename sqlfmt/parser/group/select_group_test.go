@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReindentSelectGroup(t *testing.T) {
@@ -42,11 +43,7 @@ func TestReindentSelectGroup(t *testing.T) {
 }
 
 func TestIncrementIndentLevel(t *testing.T) {
-	s := &Select{}
+	s := NewSelect(nil)
 	s.IncrementIndentLevel(1)
-	got := s.IndentLevel
-	want := 1
-	if got != want {
-		t.Errorf("want %#v got %#v", want, got)
-	}
+	require.EqualValues(t, 1, s.IndentLevel)
 }

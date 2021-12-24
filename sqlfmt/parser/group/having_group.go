@@ -1,6 +1,6 @@
 package group
 
-// Having clause
+// Having clause.
 type Having struct {
 	elementReindenter
 }

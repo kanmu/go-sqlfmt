@@ -23,6 +23,7 @@ run:
     - examples
 
 linters:
+  enable-all: false
   enable:
     - gofmt
     - goimports
@@ -39,8 +40,35 @@ linters:
     - stylecheck
     - unconvert
     - unparam
+    - prealloc
+    - prealloc
+    - nestif
+    - nlreturn
+    - goconst
+    - errorlint
+    - exportloopref
+    - godot
+    - whitespace
   disable:
     - maligned
     - lll
     - gochecknoinits
     - gochecknoglobals
+    - gci
+    - wrapcheck
+    - golint
+    - funlen
+    - godox
+    - wsl
+    - cyclop
+    - exhaustive
+    - exhaustivestruct
+    - gofumpt
+    - goerr113
+    - gomnd
+    - paralleltest
+    - varnamelen
+    - testpackage
+    - scopelint
+    - ireturn
+    - interfacer

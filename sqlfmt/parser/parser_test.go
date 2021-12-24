@@ -1,11 +1,12 @@
 package parser
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 	"github.com/fredbi/go-sqlfmt/sqlfmt/parser/group"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseTokens(t *testing.T) {
@@ -257,13 +258,17 @@ func TestParseTokens(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		got, err := ParseTokens(tt.tokenSource)
-		if err != nil {
-			t.Errorf("ERROR: %#v", err)
-		}
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("\nwant %#v, \ngot %#v", tt.want, got)
-		}
+	for _, toPin := range tests {
+		tt := toPin
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTokens(tt.tokenSource)
+			require.NoError(t, err)
+
+			for i, actual := range got {
+				expected := tt.want[i]
+
+				assert.EqualValuesf(t, expected, actual, "\ngroup[%d]\nwant %#v, \ngot %#v", i, expected, actual)
+			}
+		})
 	}
 }

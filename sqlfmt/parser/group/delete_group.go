@@ -1,6 +1,6 @@
 package group
 
-// Delete clause
+// Delete clause.
 type Delete struct {
 	elementReindenter
 }
