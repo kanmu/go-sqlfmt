@@ -1,3 +1,4 @@
+//nolint:dupl
 package group
 
 import (
@@ -26,9 +27,14 @@ func TestReindentLockGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		lock := &Lock{Element: tt.tokenSource}
+		lock := NewLock(tt.tokenSource)
 
-		lock.Reindent(buf)
+		if err := lock.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

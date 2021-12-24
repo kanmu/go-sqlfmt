@@ -6,35 +6,38 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// OrderBy clause
+// OrderBy clause.
 type OrderBy struct {
-	Element     []Reindenter
-	IndentLevel int
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+func NewOrderBy(element []Reindenter, opts ...Option) *OrderBy {
+	return &OrderBy{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
+}
 
-	src, err := processPunctuation(o.Element)
+// Reindent reindents its elements.
+func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
+	o.start = 0
+
+	element, err := o.processPunctuation()
 	if err != nil {
 		return err
 	}
 
-	for _, el := range separate(src) {
+	for _, el := range separate(element) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, o.IndentLevel); err != nil {
-				return err
+			if erw := o.writeWithComma(buf, v, o.IndentLevel); erw != nil {
+				return erw
 			}
 		case Reindenter:
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
-	return nil
-}
 
-// IncrementIndentLevel increments by its specified indent level
-func (o *OrderBy) IncrementIndentLevel(lev int) {
-	o.IndentLevel += lev
+	return nil
 }

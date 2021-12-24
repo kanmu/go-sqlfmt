@@ -6,35 +6,38 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Set clause
+// Set clause.
 type Set struct {
-	Element     []Reindenter
-	IndentLevel int
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (s *Set) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+func NewSet(element []Reindenter, opts ...Option) *Set {
+	return &Set{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
+}
 
-	src, err := processPunctuation(s.Element)
+// Reindent reindents its elements.
+func (s *Set) Reindent(buf *bytes.Buffer) error {
+	s.start = 0
+
+	elements, err := s.processPunctuation()
 	if err != nil {
 		return err
 	}
 
-	for _, el := range separate(src) {
+	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, s.IndentLevel); err != nil {
-				return err
+			if erw := s.writeWithComma(buf, v, s.IndentLevel); erw != nil {
+				return erw
 			}
 		case Reindenter:
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
-	return nil
-}
 
-// IncrementIndentLevel increments by its specified indent level
-func (s *Set) IncrementIndentLevel(lev int) {
-	s.IndentLevel += lev
+	return nil
 }

@@ -7,6 +7,8 @@ import (
 )
 
 func TestGetTokens(t *testing.T) {
+	options := defaultOptions()
+
 	var testingSQLStatement = strings.Trim(`select name, age,sum, sum(case xxx) from user where name xxx and age = 'xxx' limit 100 except 100`, "`")
 	want := []Token{
 		{Type: SELECT, Value: "SELECT"},
@@ -38,7 +40,13 @@ func TestGetTokens(t *testing.T) {
 
 		{Type: EOF, Value: "EOF"},
 	}
+
+	for i := range want {
+		want[i].options = options
+	}
+
 	tnz := NewTokenizer(testingSQLStatement)
+	tnz.options = options
 	got, err := tnz.GetTokens()
 	if err != nil {
 		t.Fatalf("\nERROR: %#v", err)
@@ -120,6 +128,7 @@ func TestScan(t *testing.T) {
 	}
 }
 
+// nolint: dupl
 func TestScanWhiteSpace(t *testing.T) {
 	tests := []struct {
 		name string
@@ -137,10 +146,20 @@ func TestScanWhiteSpace(t *testing.T) {
 			want: Token{Type: NEWLINE, Value: "\n"},
 		},
 	}
+	options := defaultOptions()
+	for i := range tests {
+		tests[i].want.options = options
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tnz := NewTokenizer(tt.src)
-			tnz.scanWhiteSpace()
+			tnz.options = options
+			if err := tnz.scanWhiteSpace(); err != nil {
+				t.Errorf("unexpected error: %v", err)
+
+				return
+			}
 
 			if got := tnz.result[0]; got != tt.want {
 				t.Errorf("\nwant %v, \ngot %v", tt.want, got)
@@ -149,6 +168,7 @@ func TestScanWhiteSpace(t *testing.T) {
 	}
 }
 
+// nolint: dupl
 func TestScanIdent(t *testing.T) {
 	tests := []struct {
 		name string
@@ -166,10 +186,20 @@ func TestScanIdent(t *testing.T) {
 			want: Token{Type: IDENT, Value: "table"},
 		},
 	}
+	options := defaultOptions()
+	for i := range tests {
+		tests[i].want.options = options
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tnz := NewTokenizer(tt.src)
-			tnz.scanIdent()
+			tnz.options = options
+			if err := tnz.scanIdent(); err != nil {
+				t.Errorf("unexpected error: %v", err)
+
+				return
+			}
 
 			if got := tnz.result[0]; got != tt.want {
 				t.Errorf("\nwant %v, \ngot %v", tt.want, got)

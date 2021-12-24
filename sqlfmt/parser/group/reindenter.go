@@ -8,213 +8,208 @@ import (
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// Reindenter interface
-// specific values of Reindenter would be clause group or token
-type Reindenter interface {
-	Reindent(buf *bytes.Buffer) error
-	IncrementIndentLevel(lev int)
+type (
+	// Reindenter interface
+	// specific values of Reindenter would be clause group or token.
+	Reindenter interface {
+		Reindent(*bytes.Buffer) error
+		IncrementIndentLevel(int)
+		GetStart() int
+	}
+
+	baseReindenter struct {
+		start int
+		*options
+	}
+
+	elementReindenter struct {
+		Element []Reindenter
+		baseReindenter
+	}
+)
+
+func (g baseReindenter) GetStart() int {
+	return g.start
 }
 
-// count of ident appearing in column area
-var columnCount int
+// GetOpts retrieves options. This is useful for comparing types when testing.
+func (g *baseReindenter) GetOpts() []Option {
+	if g.options == nil {
+		return nil
+	}
 
-// to reindent
+	return []Option{
+		WithIndentLevel(g.options.IndentLevel),
+		WithCommaStyle(g.options.commaStyle),
+	}
+}
+
+// SetOpts sets options. This is useful for comparing types when testing.
+func (g *baseReindenter) SetOpts(opts ...Option) {
+	g.options = defaultOptions(opts...)
+}
+
+// IncrementIndentLevel increments by its specified indent level.
+func (g *baseReindenter) IncrementIndentLevel(lev int) {
+	g.IndentLevel += lev
+}
+
+func (g *baseReindenter) writeComma(buf *bytes.Buffer, token lexer.Token, indent int) {
+	switch g.commaStyle {
+	case CommaStyleRight:
+		buf.WriteString(fmt.Sprintf(
+			"%s%s%s%s",
+			token.FormattedValue(),
+			NewLine,
+			strings.Repeat(DoubleWhiteSpace, indent),
+			WhiteSpace,
+		))
+	default:
+		buf.WriteString(fmt.Sprintf(
+			"%s%s%s%s",
+			NewLine,
+			strings.Repeat(DoubleWhiteSpace, indent),
+			DoubleWhiteSpace,
+			token.FormattedValue(),
+		))
+	}
+}
+
+func newElementReindenter(element []Reindenter, opts ...Option) elementReindenter {
+	o := defaultOptions(opts...)
+
+	return elementReindenter{
+		Element: element,
+		baseReindenter: baseReindenter{
+			options: o,
+		},
+	}
+}
+
+func (e *elementReindenter) processPunctuation() ([]Reindenter, error) {
+	elements, err := processPunctuation(e.Element)
+	if err != nil {
+		return nil, err
+	}
+
+	return elements, nil
+}
+
+func (e *elementReindenter) elementsTokenApply(
+	elements []Reindenter,
+	buf *bytes.Buffer,
+	apply func(*bytes.Buffer, lexer.Token, int) error,
+) error {
+	for _, el := range elements {
+		if token, ok := el.(lexer.Token); ok {
+			if err := apply(buf, token, e.IndentLevel); err != nil {
+				return err
+			}
+		} else {
+			if err := el.Reindent(buf); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// Reindent reindents its elements.
+func (e *elementReindenter) Reindent(buf *bytes.Buffer) error {
+	elements, err := e.processPunctuation()
+	if err != nil {
+		return err
+	}
+
+	return e.elementsTokenApply(elements, buf, write)
+}
+
+func (e *elementReindenter) writeWithComma(buf *bytes.Buffer, v interface{}, indent int) error {
+	columnCount := e.start
+	defer func() {
+		e.start = columnCount
+	}()
+
+	if token, ok := v.(lexer.Token); ok {
+		switch {
+		case token.IsNeedNewLineBefore():
+			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
+		case token.Type == lexer.BY:
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
+		case token.Type == lexer.COMMA:
+			e.writeComma(buf, token, indent)
+		default:
+			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
+		}
+	} else if str, ok := v.(string); ok {
+		str = strings.TrimRight(str, " ")
+
+		switch {
+		case columnCount == 0:
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
+		case strings.HasPrefix(token.FormattedValue(), "::"):
+			buf.WriteString(str)
+		default:
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
+		}
+
+		columnCount++
+	}
+
+	return nil
+}
+
+// to reindent.
 const (
 	NewLine          = "\n"
 	WhiteSpace       = " "
 	DoubleWhiteSpace = "  "
 )
 
-func write(buf *bytes.Buffer, token lexer.Token, indent int) {
+var (
+	_ Reindenter = &elementReindenter{}
+	_ Reindenter = &AndGroup{}
+	_ Reindenter = &Case{}
+	_ Reindenter = &Delete{}
+	_ Reindenter = &From{}
+	_ Reindenter = &Function{}
+	_ Reindenter = &GroupBy{}
+	_ Reindenter = &Having{}
+	_ Reindenter = &Insert{}
+	_ Reindenter = &Join{}
+	_ Reindenter = &LimitClause{}
+	_ Reindenter = &Lock{}
+	_ Reindenter = &OrderBy{}
+	_ Reindenter = &OrGroup{}
+	_ Reindenter = &Parenthesis{}
+	_ Reindenter = &Returning{}
+	_ Reindenter = &Select{}
+	_ Reindenter = &Set{}
+	_ Reindenter = &Subquery{}
+	_ Reindenter = &TieClause{}
+	_ Reindenter = &TypeCast{}
+	_ Reindenter = &Update{}
+	_ Reindenter = &Values{}
+	_ Reindenter = &Where{}
+	_ Reindenter = &With{}
+)
+
+func write(buf *bytes.Buffer, token lexer.Token, indent int) error {
 	switch {
 	case token.IsNeedNewLineBefore():
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
 	case token.Type == lexer.COMMA:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
+		buf.WriteString(token.FormattedValue())
 	case token.Type == lexer.DO:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, token.Value, WhiteSpace))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, token.FormattedValue(), WhiteSpace))
+	case strings.HasPrefix(token.FormattedValue(), "::"):
+		buf.WriteString(token.FormattedValue())
 	case token.Type == lexer.WITH:
-		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.FormattedValue()))
 	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
 	}
-}
 
-func writeWithComma(buf *bytes.Buffer, v interface{}, indent int) error {
-	if token, ok := v.(lexer.Token); ok {
-		switch {
-		case token.IsNeedNewLineBefore():
-			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-		case token.Type == lexer.BY:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-		case token.Type == lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
-		default:
-			return fmt.Errorf("can not reindent %#v", token.Value)
-		}
-	} else if str, ok := v.(string); ok {
-		str = strings.TrimRight(str, " ")
-		if columnCount == 0 {
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
-		} else if strings.HasPrefix(token.Value, "::") {
-			buf.WriteString(fmt.Sprintf("%s", str))
-		} else {
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
-		}
-		columnCount++
-	}
 	return nil
-}
-
-func writeSelect(buf *bytes.Buffer, el interface{}, indent int) error {
-	if token, ok := el.(lexer.Token); ok {
-		switch token.Type {
-		case lexer.SELECT, lexer.INTO:
-			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-		case lexer.AS, lexer.DISTINCT, lexer.DISTINCTROW, lexer.GROUP, lexer.ON:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-		case lexer.EXISTS:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-			columnCount++
-		case lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
-		default:
-			return fmt.Errorf("can not reindent %#v", token.Value)
-		}
-	} else if str, ok := el.(string); ok {
-		str = strings.Trim(str, WhiteSpace)
-		if columnCount == 0 {
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
-		} else {
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
-		}
-		columnCount++
-	}
-	return nil
-}
-
-func writeCase(buf *bytes.Buffer, token lexer.Token, indent int, hasCommaBefore bool) {
-	if hasCommaBefore {
-		switch token.Type {
-		case lexer.CASE:
-			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-		case lexer.WHEN, lexer.ELSE:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, WhiteSpace, DoubleWhiteSpace, token.Value))
-		case lexer.END:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, WhiteSpace, token.Value))
-		case lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s", token.Value))
-		default:
-			if strings.HasPrefix(token.Value, "::") {
-				buf.WriteString(fmt.Sprintf("%s", token.Value))
-			} else {
-				buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-			}
-		}
-	} else {
-		switch token.Type {
-		case lexer.CASE, lexer.END:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
-		case lexer.WHEN, lexer.ELSE:
-			buf.WriteString(fmt.Sprintf("%s%s%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, WhiteSpace, DoubleWhiteSpace, token.Value))
-		case lexer.COMMA:
-			buf.WriteString(fmt.Sprintf("%s", token.Value))
-		default:
-			if strings.HasPrefix(token.Value, "::") {
-				buf.WriteString(fmt.Sprintf("%s", token.Value))
-			} else {
-				buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-			}
-		}
-	}
-}
-
-func writeJoin(buf *bytes.Buffer, token lexer.Token, indent int, isFirst bool) {
-	switch {
-	case isFirst && token.IsJoinStart():
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-	case token.Type == lexer.ON || token.Type == lexer.USING:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	}
-}
-
-func writeFunction(buf *bytes.Buffer, token, prev lexer.Token, indent, columnCount int, inColumnArea bool) {
-	switch {
-	case prev.Type == lexer.STARTPARENTHESIS || token.Type == lexer.STARTPARENTHESIS || token.Type == lexer.ENDPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	case token.Type == lexer.FUNCTION && columnCount == 0 && inColumnArea:
-		buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
-	case token.Type == lexer.FUNCTION:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	case token.Type == lexer.COMMA:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	}
-}
-
-func writeParenthesis(buf *bytes.Buffer, token lexer.Token, indent, columnCount int, inColumnArea, hasStartBefore bool) {
-	switch {
-	case token.Type == lexer.STARTPARENTHESIS && columnCount == 0 && inColumnArea:
-		buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.Value))
-	case token.Type == lexer.STARTPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	case token.Type == lexer.ENDPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	case token.Type == lexer.COMMA:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	case hasStartBefore:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	}
-}
-
-func writeSubquery(buf *bytes.Buffer, token lexer.Token, indent, columnCount int, inColumnArea bool) {
-	switch {
-	case token.Type == lexer.STARTPARENTHESIS && columnCount == 0 && inColumnArea:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-	case token.Type == lexer.STARTPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	case token.Type == lexer.ENDPARENTHESIS && columnCount > 0:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.Value))
-	case token.Type == lexer.ENDPARENTHESIS:
-		buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent-1), token.Value))
-	case strings.HasPrefix(token.Value, "::"):
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	}
-}
-
-func writeTypeCast(buf *bytes.Buffer, token lexer.Token) {
-	switch token.Type {
-	case lexer.TYPE:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	case lexer.COMMA:
-		buf.WriteString(fmt.Sprintf("%s%s", token.Value, WhiteSpace))
-	default:
-		buf.WriteString(fmt.Sprintf("%s", token.Value))
-	}
-}
-
-func writeLock(buf *bytes.Buffer, token lexer.Token) {
-	switch token.Type {
-	case lexer.LOCK:
-		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
-	case lexer.IN:
-		buf.WriteString(fmt.Sprintf("%s%s", NewLine, token.Value))
-	default:
-		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.Value))
-	}
 }

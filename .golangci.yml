@@ -1,0 +1,74 @@
+linters-settings:
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 25
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 150
+  goconst:
+    min-len: 3
+    min-occurrences: 2
+  forbidigo:
+    forbid:
+      - 'fmt\.Print.*'
+  funlen:
+    lines: 100
+    statements: 50
+  gocognit:
+    min-complexity: 80 # This is super high value. We should gradually lower it to 30-40.
+run:
+  skip-dirs:
+    - examples
+
+linters:
+  enable-all: false
+  enable:
+    - gofmt
+    - goimports
+    - bodyclose
+    - dupl
+    - forbidigo
+    - gocognit
+    - gocritic
+    - goimports
+    - gosec
+    - nakedret
+    - nolintlint
+    - revive
+    - stylecheck
+    - unconvert
+    - unparam
+    - prealloc
+    - prealloc
+    - nestif
+    - nlreturn
+    - goconst
+    - errorlint
+    - exportloopref
+    - godot
+    - whitespace
+  disable:
+    - maligned
+    - lll
+    - gochecknoinits
+    - gochecknoglobals
+    - gci
+    - wrapcheck
+    - golint
+    - funlen
+    - godox
+    - wsl
+    - cyclop
+    - exhaustive
+    - exhaustivestruct
+    - gofumpt
+    - goerr113
+    - gomnd
+    - paralleltest
+    - varnamelen
+    - testpackage
+    - scopelint
+    - ireturn
+    - interfacer

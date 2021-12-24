@@ -1,11 +1,46 @@
 # sqlfmt
 
-[![Build Status](https://travis-ci.org/kanmu/go-sqlfmt.svg?branch=master)](https://travis-ci.org/kanmu/go-sqlfmt)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kanmu/go-sqlfmt)](https://goreportcard.com/report/github.com/kanmu/go-sqlfmt)
+[![Build Status](https://travis-ci.org/fredbi/go-sqlfmt.svg?branch=master)](https://travis-ci.org/fredbi/go-sqlfmt)
+[![Go Report Card](https://goreportcard.com/badge/github.com/fredbi/go-sqlfmt)](https://goreportcard.com/report/github.com/fredbi/go-sqlfmt)
 
 ## Description
 
+A golang package to format SQL
+
+> Forked from github.com/kanmu/go-sqlfmt
+
+### Use cases
+
+* CLI: format SQL statements in go files
+* CLI: format statements in SQL files
+* lib: format SQL string
+
 The sqlfmt formats PostgreSQL statements in `.go` files into a consistent style.
+
+### Features
+
+## CLI usage
+
+```
+usage: sqlfmt [flags] [path ...]
+  -colorized
+    	colorize output
+  -comma-style string
+    	justify commas to the left or the right [left|right] (default "left")
+  -d	display diffs instead of rewriting files
+  -distance int
+    	write the distance from the edge to the begin of SQL statements
+  -l	list files whose formatting differs from goreturns's
+  -lower
+    	SQL keywords are lower-cased
+  -raw
+    	parse raw SQL file
+  -w	write result to (source) file instead of stdout
+```
+
+## Library usage
+
+TODO
 
 ## Example
 
@@ -110,11 +145,13 @@ run git clone and go build -o sqlfmt
                 with gofmt style.
   -distance     
                 Write the distance from the edge to the begin of SQL statements
+  -raw
+    	parse raw SQL file
 ```
 
 ## Limitations
 
-- The `sqlfmt` is only able to format SQL statements that are surrounded with **back quotes** and values in **`QueryRow`**, **`Query`**, **`Exec`**  functions from the `"database/sql"` package.
+- go source: The `sqlfmt` is only able to format SQL statements that are surrounded with **back quotes** and values in **`QueryRow`**, **`Query`**, **`Exec`**  functions from the `"database/sql"` package.
 
   The following SQL statements will be formatted:
 
@@ -166,7 +203,12 @@ run git clone and go build -o sqlfmt
 
 ## Future Work
 
-- [ ] Refactor
+- [x] Refactor
+- [ ] Support SQL comments
+- [ ] More comprehensive support for Posgres
+- [ ] Indentify bind variables
+- [ ] Address unsupported / flaky indented structures mentioned above
+- [ ] Support DDL
 - [ ] Turn it into a plug-in or an extension for editors
 
 ## Contribution
@@ -174,7 +216,7 @@ run git clone and go build -o sqlfmt
 Thank you for thinking of contributing to the sqlfmt!
 Pull Requests are welcome!
 
-1. Fork ([https://github.com/kanmu/go-sqlfmt))
+1. Fork ([https://github.com/fredbi/go-sqlfmt))
 2. Create a feature branch
 3. Commit your changes
 4. Rebase your local changes against the master branch

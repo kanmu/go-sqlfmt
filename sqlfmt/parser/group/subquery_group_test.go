@@ -17,20 +17,20 @@ func TestReindentSubqueryGroup(t *testing.T) {
 			name: "normalcase",
 			src: []Reindenter{
 				lexer.Token{Type: lexer.STARTPARENTHESIS, Value: "("},
-				&Select{
-					Element: []Reindenter{
+				NewSelect(
+					[]Reindenter{
 						lexer.Token{Type: lexer.SELECT, Value: "SELECT"},
 						lexer.Token{Type: lexer.IDENT, Value: "xxxxxx"},
 					},
-					IndentLevel: 1,
-				},
-				&From{
-					Element: []Reindenter{
+					WithIndentLevel(1),
+				),
+				NewFrom(
+					[]Reindenter{
 						lexer.Token{Type: lexer.FROM, Value: "FROM"},
 						lexer.Token{Type: lexer.IDENT, Value: "xxxxxx"},
 					},
-					IndentLevel: 1,
-				},
+					WithIndentLevel(1),
+				),
 				lexer.Token{Type: lexer.ENDPARENTHESIS, Value: ")"},
 			},
 			want: " (\n  SELECT\n    xxxxxx\n  FROM xxxxxx)",
@@ -38,9 +38,14 @@ func TestReindentSubqueryGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		parenGroup := &Parenthesis{Element: tt.src, IndentLevel: 1}
+		parenGroup := NewParenthesis(tt.src, WithIndentLevel(1))
 
-		parenGroup.Reindent(buf)
+		if err := parenGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

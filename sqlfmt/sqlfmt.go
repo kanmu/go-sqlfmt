@@ -10,25 +10,31 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Options for go-sqlfmt
-type Options struct {
-	Distance int
-}
+// Process formats SQL statement in .go file or sql files.
+func Process(filename string, src []byte, opts ...Option) ([]byte, error) {
+	o := defaultOptions(opts...)
 
-// Process formats SQL statement in .go file
-func Process(filename string, src []byte, options *Options) ([]byte, error) {
+	if o.IsRawSQL {
+		sql, err := Format(string(src), opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		return []byte(sql), nil
+	}
+
+	o.Colorized = false // colors do not apply to go code formatting
+
 	fset := token.NewFileSet()
 	parserMode := parser.ParseComments
-
 	astFile, err := parser.ParseFile(fset, filename, src, parserMode)
 	if err != nil {
 		return nil, formatErr(errors.Wrap(err, "parser.ParseFile failed"))
 	}
 
-	replaceAst(astFile, fset, options)
+	replaceAst(astFile, fset, withOptions(o))
 
 	var buf bytes.Buffer
-
 	if err = printer.Fprint(&buf, fset, astFile); err != nil {
 		return nil, formatErr(errors.Wrap(err, "printer.Fprint failed"))
 	}
@@ -37,6 +43,7 @@ func Process(filename string, src []byte, options *Options) ([]byte, error) {
 	if err != nil {
 		return nil, formatErr(errors.Wrap(err, "format.Source failed"))
 	}
+
 	return out, nil
 }
 

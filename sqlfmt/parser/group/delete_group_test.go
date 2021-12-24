@@ -25,9 +25,13 @@ func TestReindentDeleteGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		deleteGroup := &Delete{Element: tt.tokenSource}
+		deleteGroup := NewDelete(tt.tokenSource)
+		if err := deleteGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
 
-		deleteGroup.Reindent(buf)
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

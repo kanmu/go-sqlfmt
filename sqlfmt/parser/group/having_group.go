@@ -1,34 +1,12 @@
 package group
 
-import (
-	"bytes"
-
-	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
-)
-
-// Having clause
+// Having clause.
 type Having struct {
-	Element     []Reindenter
-	IndentLevel int
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (h *Having) Reindent(buf *bytes.Buffer) error {
-	elements, err := processPunctuation(h.Element)
-	if err != nil {
-		return err
+func NewHaving(element []Reindenter, opts ...Option) *Having {
+	return &Having{
+		elementReindenter: newElementReindenter(element, opts...),
 	}
-	for _, el := range elements {
-		if token, ok := el.(lexer.Token); ok {
-			write(buf, token, h.IndentLevel)
-		} else {
-			el.Reindent(buf)
-		}
-	}
-	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (h *Having) IncrementIndentLevel(lev int) {
-	h.IndentLevel += lev
 }

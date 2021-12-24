@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewRetriever(t *testing.T) {
@@ -27,11 +28,9 @@ func TestNewRetriever(t *testing.T) {
 		{Type: lexer.IDENT, Value: "user"},
 		{Type: lexer.EOF, Value: "EOF"},
 	}
-	got := r.TokenSource
 
-	if !reflect.DeepEqual(want, got) {
-		t.Fatalf("initialize retriever failed: want %#v got %#v", want, got)
-	}
+	got := r.TokenSource
+	require.EqualValues(t, want, got, "initialize retriever failed: want %#v got %#v", want, got)
 }
 
 func TestRetrieve(t *testing.T) {

@@ -7,16 +7,22 @@ import (
 )
 
 // GroupBy clause
+// nolint:revive
 type GroupBy struct {
-	Element     []Reindenter
-	IndentLevel int
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
-	columnCount = 0
+func NewGroupBy(element []Reindenter, opts ...Option) *GroupBy {
+	return &GroupBy{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
+}
 
-	elements, err := processPunctuation(g.Element)
+// Reindent reindents its elements.
+func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
+	g.start = 0
+
+	elements, err := g.processPunctuation()
 	if err != nil {
 		return err
 	}
@@ -24,17 +30,15 @@ func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
-			if err := writeWithComma(buf, v, g.IndentLevel); err != nil {
-				return err
+			if erw := g.writeWithComma(buf, v, g.IndentLevel); erw != nil {
+				return erw
 			}
 		case Reindenter:
-			v.Reindent(buf)
+			if eri := v.Reindent(buf); eri != nil {
+				return eri
+			}
 		}
 	}
-	return nil
-}
 
-// IncrementIndentLevel increments by its specified indent level
-func (g *GroupBy) IncrementIndentLevel(lev int) {
-	g.IndentLevel += lev
+	return nil
 }

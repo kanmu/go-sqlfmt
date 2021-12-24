@@ -1,34 +1,12 @@
 package group
 
-import (
-	"bytes"
-
-	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
-)
-
-// Where clause
+// Where clause.
 type Where struct {
-	Element     []Reindenter
-	IndentLevel int
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (w *Where) Reindent(buf *bytes.Buffer) error {
-	elements, err := processPunctuation(w.Element)
-	if err != nil {
-		return err
+func NewWhere(element []Reindenter, opts ...Option) *Where {
+	return &Where{
+		elementReindenter: newElementReindenter(element, opts...),
 	}
-	for _, el := range elements {
-		if token, ok := el.(lexer.Token); ok {
-			write(buf, token, w.IndentLevel)
-		} else {
-			el.Reindent(buf)
-		}
-	}
-	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (w *Where) IncrementIndentLevel(lev int) {
-	w.IndentLevel += lev
 }

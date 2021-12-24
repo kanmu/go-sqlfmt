@@ -2,31 +2,45 @@ package group
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 )
 
-// TypeCast group
+// TypeCast group.
 type TypeCast struct {
-	Element     []Reindenter
-	IndentLevel int
+	elementReindenter
 }
 
-// Reindent reindents its elements
+func NewTypeCast(element []Reindenter, opts ...Option) *TypeCast {
+	return &TypeCast{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
+}
+
+// Reindent reindents its elements.
 func (t *TypeCast) Reindent(buf *bytes.Buffer) error {
-	elements, err := processPunctuation(t.Element)
+	elements, err := t.processPunctuation()
 	if err != nil {
 		return err
 	}
-	for _, el := range elements {
-		if token, ok := el.(lexer.Token); ok {
-			writeTypeCast(buf, token)
-		}
-	}
-	return nil
+
+	return t.elementsTokenApply(elements, buf, t.writeTypeCast)
 }
 
-// IncrementIndentLevel increments by its specified indent level
-func (t *TypeCast) IncrementIndentLevel(lev int) {
-	t.IndentLevel += lev
+func (t *TypeCast) writeTypeCast(buf *bytes.Buffer, token lexer.Token, _ int) error {
+	switch token.Type {
+	case lexer.TYPE:
+		buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
+	case lexer.COMMA:
+		buf.WriteString(fmt.Sprintf(
+			"%s%s",
+			token.FormattedValue(),
+			WhiteSpace,
+		))
+	default:
+		buf.WriteString(token.FormattedValue())
+	}
+
+	return nil
 }

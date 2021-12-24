@@ -24,9 +24,14 @@ func TestReindentHavingGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		havingGroup := &Having{Element: tt.tokenSource}
+		havingGroup := NewHaving(tt.tokenSource)
 
-		havingGroup.Reindent(buf)
+		if err := havingGroup.Reindent(buf); err != nil {
+			t.Errorf("unexpected error: %v", err)
+
+			return
+		}
+
 		got := buf.String()
 		if tt.want != got {
 			t.Errorf("want%#v, got %#v", tt.want, got)

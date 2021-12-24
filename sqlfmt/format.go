@@ -16,26 +16,31 @@ import (
 // 1: tokenize src
 // 2: parse tokens by SQL clause group
 // 3: for each clause group (Reindenter), add indentation or new line in the correct position
-func Format(src string, options *Options) (string, error) {
-	t := lexer.NewTokenizer(src)
+func Format(src string, opts ...Option) (string, error) {
+	o := defaultOptions(opts...)
+
+	t := lexer.NewTokenizer(src, o.ToLexerOptions()...)
 	tokens, err := t.GetTokens()
 	if err != nil {
 		return src, errors.Wrap(err, "Tokenize failed")
 	}
 
-	rs, err := parser.ParseTokens(tokens)
+	rs, err := parser.ParseTokens(tokens, o.ToParserOptions()...)
 	if err != nil {
 		return src, errors.Wrap(err, "ParseTokens failed")
 	}
 
-	res, err := getFormattedStmt(rs, options.Distance)
+	res, err := getFormattedStmt(rs, o.Distance)
 	if err != nil {
 		return src, errors.Wrap(err, "getFormattedStmt failed")
 	}
 
+	/* TODO(fred): warn/ optional check
 	if !compare(src, res) {
 		return src, fmt.Errorf("the formatted statement has diffed from the source")
 	}
+	*/
+
 	return res, nil
 }
 
@@ -51,6 +56,7 @@ func getFormattedStmt(rs []group.Reindenter, distance int) (string, error) {
 	if distance != 0 {
 		return putDistance(buf.String(), distance), nil
 	}
+
 	return buf.String(), nil
 }
 
@@ -61,10 +67,11 @@ func putDistance(src string, distance int) string {
 	for scanner.Scan() {
 		result += fmt.Sprintf("%s%s%s", strings.Repeat(group.WhiteSpace, distance), scanner.Text(), "\n")
 	}
+
 	return result
 }
 
-// returns false if the value of formatted statement  (without any space) differs from source statement
+// returns false if the value of formatted statement (without any space) differs from source statement.
 func compare(src string, res string) bool {
 	before := removeSpace(src)
 	after := removeSpace(res)
@@ -72,17 +79,20 @@ func compare(src string, res string) bool {
 	if v := strings.Compare(before, after); v != 0 {
 		return false
 	}
+
 	return true
 }
 
-// removes whitespaces and new lines from src
+// removes whitespaces and new lines from src.
 func removeSpace(src string) string {
-	var result []rune
+	result := make([]rune, 0, len(src))
+
 	for _, r := range src {
 		if string(r) == "\n" || string(r) == " " || string(r) == "\t" || string(r) == "　" {
 			continue
 		}
 		result = append(result, r)
 	}
+
 	return strings.ToLower(string(result))
 }

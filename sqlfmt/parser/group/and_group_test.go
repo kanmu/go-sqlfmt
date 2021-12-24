@@ -25,7 +25,7 @@ func TestReindentAndGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		andGroup := &AndGroup{Element: tt.tokenSource}
+		andGroup := NewAndGroup(tt.tokenSource)
 
 		if err := andGroup.Reindent(buf); err != nil {
 			t.Errorf("error %#v", err)
