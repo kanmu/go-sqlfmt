@@ -1,4 +1,3 @@
-//nolint:dupl
 package group
 
 import (
@@ -27,7 +26,7 @@ func TestReindentWhereGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		whereGroup := &Where{Element: tt.tokenSource}
+		whereGroup := NewWhere(tt.tokenSource)
 
 		if err := whereGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

@@ -38,7 +38,7 @@ func TestReindentUnionGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		unionGroup := &TieClause{Element: tt.tokenSource}
+		unionGroup := NewTieClause(tt.tokenSource)
 
 		if err := unionGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

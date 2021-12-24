@@ -39,7 +39,7 @@ func TestReindentLimitGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		limitGroup := &LimitClause{Element: tt.tokenSource}
+		limitGroup := NewLimitClause(tt.tokenSource)
 
 		if err := limitGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

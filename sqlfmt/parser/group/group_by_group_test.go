@@ -25,7 +25,7 @@ func TestReindentGroupByGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		groupByGroup := &GroupBy{Element: tt.tokenSource}
+		groupByGroup := NewGroupBy(tt.tokenSource)
 
 		if err := groupByGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

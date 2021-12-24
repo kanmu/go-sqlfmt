@@ -27,7 +27,7 @@ func TestReindentReturningGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		returningGroup := &Returning{Element: tt.tokenSource}
+		returningGroup := NewReturning(tt.tokenSource)
 
 		if err := returningGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

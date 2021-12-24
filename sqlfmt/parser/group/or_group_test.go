@@ -25,7 +25,7 @@ func TestReindentOrGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		orGroup := &OrGroup{Element: tt.tokenSource}
+		orGroup := NewOrGroup(tt.tokenSource)
 
 		if err := orGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

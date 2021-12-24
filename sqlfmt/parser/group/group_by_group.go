@@ -9,16 +9,20 @@ import (
 // GroupBy clause
 // nolint:revive
 type GroupBy struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
+}
+
+func NewGroupBy(element []Reindenter, opts ...Option) *GroupBy {
+	return &GroupBy{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
 }
 
 // Reindent reindents its elements
 func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	g.start = 0
 
-	elements, err := processPunctuation(g.Element)
+	elements, err := g.processPunctuation()
 	if err != nil {
 		return err
 	}
@@ -37,9 +41,4 @@ func (g *GroupBy) Reindent(buf *bytes.Buffer) error {
 	}
 
 	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (g *GroupBy) IncrementIndentLevel(lev int) {
-	g.IndentLevel += lev
 }

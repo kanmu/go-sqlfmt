@@ -1,4 +1,3 @@
-//nolint:dupl
 package group
 
 import (
@@ -27,7 +26,7 @@ func TestReindentSelectGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		selectGroup := &Select{Element: tt.tokenSource}
+		selectGroup := NewSelect(tt.tokenSource)
 
 		if err := selectGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

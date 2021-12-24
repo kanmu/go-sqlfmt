@@ -92,6 +92,7 @@ func processPunctuation(rs []Reindenter) ([]Reindenter, error) {
 			result = append(result, v)
 		}
 	}
+
 	return result, nil
 }
 
@@ -103,6 +104,7 @@ func extractSurroundingArea(rs []Reindenter) (string, int, error) {
 		result       string
 		skipRange    int
 	)
+
 	for i, r := range rs {
 		if token, ok := r.(lexer.Token); ok {
 			switch {

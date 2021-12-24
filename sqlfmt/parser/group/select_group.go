@@ -3,6 +3,7 @@ package group
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
 	"github.com/pkg/errors"
@@ -10,25 +11,28 @@ import (
 
 // Select clause
 type Select struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
+}
+
+func NewSelect(element []Reindenter, opts ...Option) *Select {
+	return &Select{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
 }
 
 // Reindent reindens its elements
 func (s *Select) Reindent(buf *bytes.Buffer) error {
 	s.start = 0
 
-	src, err := processPunctuation(s.Element)
+	elements, err := s.processPunctuation()
 	if err != nil {
 		return err
 	}
-	elements := separate(src)
 
-	for i, element := range elements {
+	for i, element := range separate(elements) {
 		switch v := element.(type) {
 		case lexer.Token, string:
-			if erw := writeSelect(buf, element, &s.start, s.IndentLevel); erw != nil {
+			if erw := s.writeSelect(buf, element, &s.start, s.IndentLevel); erw != nil {
 				return errors.Wrap(erw, "writeSelect failed")
 			}
 		case *Case:
@@ -50,7 +54,6 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 			if eri := v.Reindent(buf); eri != nil {
 				return eri
 			}
-
 			s.start++
 		case *Subquery:
 			if token, ok := elements[i-1].(lexer.Token); ok {
@@ -73,7 +76,6 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 			if eri := v.Reindent(buf); eri != nil {
 				return eri
 			}
-
 			s.start++
 		case Reindenter:
 			if eri := v.Reindent(buf); eri != nil {
@@ -87,7 +89,35 @@ func (s *Select) Reindent(buf *bytes.Buffer) error {
 	return nil
 }
 
-// IncrementIndentLevel increments by its specified indent level
-func (s *Select) IncrementIndentLevel(lev int) {
-	s.IndentLevel += lev
+func (s *Select) writeSelect(buf *bytes.Buffer, el interface{}, start *int, indent int) error {
+	columnCount := *start
+	defer func() {
+		*start = columnCount
+	}()
+
+	if token, ok := el.(lexer.Token); ok {
+		switch token.Type {
+		case lexer.SELECT, lexer.INTO:
+			buf.WriteString(fmt.Sprintf("%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), token.FormattedValue()))
+		case lexer.AS, lexer.DISTINCT, lexer.DISTINCTROW, lexer.GROUP, lexer.ON:
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
+		case lexer.EXISTS:
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, token.FormattedValue()))
+			columnCount++
+		case lexer.COMMA:
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, token.FormattedValue()))
+		default:
+			return fmt.Errorf("can not reindent %#v", token.FormattedValue())
+		}
+	} else if str, ok := el.(string); ok {
+		str = strings.Trim(str, WhiteSpace)
+		if columnCount == 0 {
+			buf.WriteString(fmt.Sprintf("%s%s%s%s", NewLine, strings.Repeat(DoubleWhiteSpace, indent), DoubleWhiteSpace, str))
+		} else {
+			buf.WriteString(fmt.Sprintf("%s%s", WhiteSpace, str))
+		}
+		columnCount++
+	}
+
+	return nil
 }

@@ -123,6 +123,7 @@ func (t Token) formatKeyword() string {
 		in = t.recaser(in)
 	}
 
+	// TODO: colorizer by token type for prettier output (functions, keywords, etc)
 	if t.colorizer != nil {
 		in = t.colorizer(in)
 	}

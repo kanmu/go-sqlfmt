@@ -1,43 +1,16 @@
 package group
 
-import (
-	"bytes"
-
-	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
-)
-
 // AndGroup is AND clause not AND operator
 // AndGroup is made after new line
 //// select xxx and xxx  <= this is not AndGroup
 //// select xxx from xxx where xxx
 //// and xxx      <= this is AndGroup
 type AndGroup struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (a *AndGroup) Reindent(buf *bytes.Buffer) error {
-	elements, err := processPunctuation(a.Element)
-	if err != nil {
-		return err
+func NewAndGroup(element []Reindenter, opts ...Option) *AndGroup {
+	return &AndGroup{
+		elementReindenter: newElementReindenter(element, opts...),
 	}
-
-	for _, el := range elements {
-		if token, ok := el.(lexer.Token); ok {
-			write(buf, token, a.IndentLevel)
-		} else {
-			if eri := el.Reindent(buf); eri != nil {
-				return eri
-			}
-		}
-	}
-
-	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (a *AndGroup) IncrementIndentLevel(lev int) {
-	a.IndentLevel += lev
 }

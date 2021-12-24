@@ -24,7 +24,7 @@ func TestReindentUpdateGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		updateGroup := &Update{Element: tt.tokenSource}
+		updateGroup := NewUpdate(tt.tokenSource)
 
 		if err := updateGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

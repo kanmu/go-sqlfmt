@@ -8,21 +8,25 @@ import (
 
 // Set clause
 type Set struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
+}
+
+func NewSet(element []Reindenter, opts ...Option) *Set {
+	return &Set{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
 }
 
 // Reindent reindents its elements
 func (s *Set) Reindent(buf *bytes.Buffer) error {
 	s.start = 0
 
-	src, err := processPunctuation(s.Element)
+	elements, err := s.processPunctuation()
 	if err != nil {
 		return err
 	}
 
-	for _, el := range separate(src) {
+	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
 			if erw := writeWithComma(buf, v, &s.start, s.IndentLevel); erw != nil {
@@ -36,9 +40,4 @@ func (s *Set) Reindent(buf *bytes.Buffer) error {
 	}
 
 	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (s *Set) IncrementIndentLevel(lev int) {
-	s.IndentLevel += lev
 }

@@ -8,19 +8,23 @@ import (
 
 // Returning clause
 type Returning struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
+}
+
+func NewReturning(element []Reindenter, opts ...Option) *Returning {
+	return &Returning{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
 }
 
 // Reindent reindents its elements
 func (r *Returning) Reindent(buf *bytes.Buffer) error {
-	src, err := processPunctuation(r.Element)
+	elements, err := r.processPunctuation()
 	if err != nil {
 		return err
 	}
 
-	for _, el := range separate(src) {
+	for _, el := range separate(elements) {
 		switch v := el.(type) {
 		case lexer.Token, string:
 			if erw := writeWithComma(buf, v, &r.start, r.IndentLevel); erw != nil {
@@ -34,9 +38,4 @@ func (r *Returning) Reindent(buf *bytes.Buffer) error {
 	}
 
 	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (r *Returning) IncrementIndentLevel(lev int) {
-	r.IndentLevel += lev
 }

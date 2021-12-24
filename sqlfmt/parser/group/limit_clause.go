@@ -1,37 +1,12 @@
 package group
 
-import (
-	"bytes"
-
-	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
-)
-
 // LimitClause such as LIMIT, OFFSET, FETCH FIRST
 type LimitClause struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (l *LimitClause) Reindent(buf *bytes.Buffer) error {
-	elements, err := processPunctuation(l.Element)
-	if err != nil {
-		return err
+func NewLimitClause(element []Reindenter, opts ...Option) *LimitClause {
+	return &LimitClause{
+		elementReindenter: newElementReindenter(element, opts...),
 	}
-	for _, el := range elements {
-		if token, ok := el.(lexer.Token); ok {
-			write(buf, token, l.IndentLevel)
-		} else {
-			if eri := el.Reindent(buf); eri != nil {
-				return eri
-			}
-		}
-	}
-	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (l *LimitClause) IncrementIndentLevel(lev int) {
-	l.IndentLevel += lev
 }

@@ -1,37 +1,12 @@
 package group
 
-import (
-	"bytes"
-
-	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer"
-)
-
 // From clause
 type From struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
 }
 
-// Reindent reindents its elements
-func (f *From) Reindent(buf *bytes.Buffer) error {
-	elements, err := processPunctuation(f.Element)
-	if err != nil {
-		return err
+func NewFrom(element []Reindenter, opts ...Option) *From {
+	return &From{
+		elementReindenter: newElementReindenter(element, opts...),
 	}
-	for _, el := range elements {
-		if token, ok := el.(lexer.Token); ok {
-			write(buf, token, f.IndentLevel)
-		} else {
-			if eri := el.Reindent(buf); eri != nil {
-				return eri
-			}
-		}
-	}
-	return nil
-}
-
-// IncrementIndentLevel indents by its specified indent level
-func (f *From) IncrementIndentLevel(lev int) {
-	f.IndentLevel += lev
 }

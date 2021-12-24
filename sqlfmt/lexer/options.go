@@ -29,24 +29,28 @@ func defaultOptions(opts ...Option) *options {
 	return o
 }
 
+// WithColorizer sets an arbitrary token formatter as colorizer
 func WithColorizer(colorizer TokenFormatter) Option {
 	return func(opt *options) {
 		opt.colorizer = colorizer
 	}
 }
 
+// WithRecaser sets an arbitrary token formatter as recaser
 func WithRecaser(recaser TokenFormatter) Option {
 	return func(opt *options) {
 		opt.recaser = recaser
 	}
 }
 
+// Colorized is the default colorizer, with SQL keywords in yellow
 func Colorized() Option {
 	return func(opt *options) {
 		opt.colorizer = func(in string) string { return color.YellowString(in) }
 	}
 }
 
+// LowerCased normalizes all SQL keywords as lower case
 func LowerCased() Option {
 	return func(opt *options) {
 		opt.recaser = strings.ToLower

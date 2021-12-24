@@ -275,68 +275,68 @@ func createGroup(tokenSource []group.Reindenter) group.Reindenter {
 
 	switch firstToken.Type {
 	case lexer.SELECT:
-		return &group.Select{Element: tokenSource}
+		return group.NewSelect(tokenSource)
 	case lexer.FROM:
-		return &group.From{Element: tokenSource}
+		return group.NewFrom(tokenSource)
 	case lexer.JOIN, lexer.INNER, lexer.OUTER, lexer.LEFT, lexer.RIGHT, lexer.NATURAL, lexer.CROSS:
-		return &group.Join{Element: tokenSource}
+		return group.NewJoin(tokenSource)
 	case lexer.WHERE:
-		return &group.Where{Element: tokenSource}
+		return group.NewWhere(tokenSource)
 	case lexer.ANDGROUP:
-		return &group.AndGroup{Element: tokenSource}
+		return group.NewAndGroup(tokenSource)
 	case lexer.ORGROUP:
-		return &group.OrGroup{Element: tokenSource}
+		return group.NewOrGroup(tokenSource)
 	case lexer.GROUP:
-		return &group.GroupBy{Element: tokenSource}
+		return group.NewGroupBy(tokenSource)
 	case lexer.ORDER:
-		return &group.OrderBy{Element: tokenSource}
+		return group.NewOrderBy(tokenSource)
 	case lexer.HAVING:
-		return &group.Having{Element: tokenSource}
+		return group.NewHaving(tokenSource)
 	case lexer.LIMIT, lexer.OFFSET, lexer.FETCH:
-		return &group.LimitClause{Element: tokenSource}
+		return group.NewLimitClause(tokenSource)
 	case lexer.UNION, lexer.INTERSECT, lexer.EXCEPT:
-		return &group.TieClause{Element: tokenSource}
+		return group.NewTieClause(tokenSource)
 	case lexer.UPDATE:
-		return &group.Update{Element: tokenSource}
+		return group.NewUpdate(tokenSource)
 	case lexer.SET:
-		return &group.Set{Element: tokenSource}
+		return group.NewSet(tokenSource)
 	case lexer.RETURNING:
-		return &group.Returning{Element: tokenSource}
+		return group.NewReturning(tokenSource)
 	case lexer.LOCK:
-		return &group.Lock{Element: tokenSource}
+		return group.NewLock(tokenSource)
 	case lexer.INSERT:
-		return &group.Insert{Element: tokenSource}
+		return group.NewInsert(tokenSource)
 	case lexer.VALUES:
-		return &group.Values{Element: tokenSource}
+		return group.NewValues(tokenSource)
 	case lexer.DELETE:
-		return &group.Delete{Element: tokenSource}
+		return group.NewDelete(tokenSource)
 	case lexer.WITH:
-		return &group.With{Element: tokenSource}
+		return group.NewWith(tokenSource)
 	// endKeyWord of CASE group("END") has to be included in the group, so it is appended to result
 	case lexer.CASE:
 		endToken := lexer.Token{Type: lexer.END, Value: "END"}
 		tokenSource = append(tokenSource, endToken)
 
-		return &group.Case{Element: tokenSource}
+		return group.NewCase(tokenSource)
 	// endKeyWord of subQuery group (")") has to be included in the group, so it is appended to result
 	case lexer.STARTPARENTHESIS:
 		endToken := lexer.Token{Type: lexer.ENDPARENTHESIS, Value: ")"}
 		tokenSource = append(tokenSource, endToken)
 
 		if _, isSubQuery := tokenSource[1].(*group.Select); isSubQuery {
-			return &group.Subquery{Element: tokenSource}
+			return group.NewSubquery(tokenSource)
 		}
-		return &group.Parenthesis{Element: tokenSource}
+		return group.NewParenthesis(tokenSource)
 	case lexer.FUNCTION:
 		endToken := lexer.Token{Type: lexer.ENDPARENTHESIS, Value: ")"}
 		tokenSource = append(tokenSource, endToken)
 
-		return &group.Function{Element: tokenSource}
+		return group.NewFunction(tokenSource)
 	case lexer.TYPE:
 		endToken := lexer.Token{Type: lexer.ENDPARENTHESIS, Value: ")"}
 		tokenSource = append(tokenSource, endToken)
 
-		return &group.TypeCast{Element: tokenSource}
+		return group.NewTypeCast(tokenSource)
 	}
 	return nil
 }

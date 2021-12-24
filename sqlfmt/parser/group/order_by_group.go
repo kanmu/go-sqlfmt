@@ -8,21 +8,25 @@ import (
 
 // OrderBy clause
 type OrderBy struct {
-	Element     []Reindenter
-	IndentLevel int
-	baseReindenter
+	elementReindenter
+}
+
+func NewOrderBy(element []Reindenter, opts ...Option) *OrderBy {
+	return &OrderBy{
+		elementReindenter: newElementReindenter(element, opts...),
+	}
 }
 
 // Reindent reindents its elements
 func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
 	o.start = 0
 
-	src, err := processPunctuation(o.Element)
+	element, err := o.processPunctuation()
 	if err != nil {
 		return err
 	}
 
-	for _, el := range separate(src) {
+	for _, el := range separate(element) {
 		switch v := el.(type) {
 		case lexer.Token, string:
 			if erw := writeWithComma(buf, v, &o.start, o.IndentLevel); erw != nil {
@@ -35,9 +39,4 @@ func (o *OrderBy) Reindent(buf *bytes.Buffer) error {
 		}
 	}
 	return nil
-}
-
-// IncrementIndentLevel increments by its specified indent level
-func (o *OrderBy) IncrementIndentLevel(lev int) {
-	o.IndentLevel += lev
 }

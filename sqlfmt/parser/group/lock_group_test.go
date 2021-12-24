@@ -27,7 +27,7 @@ func TestReindentLockGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		lock := &Lock{Element: tt.tokenSource}
+		lock := NewLock(tt.tokenSource)
 
 		if err := lock.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

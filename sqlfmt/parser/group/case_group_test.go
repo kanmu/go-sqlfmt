@@ -28,7 +28,7 @@ func TestReindentCaseGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		caseGroup := &Case{Element: tt.tokenSource}
+		caseGroup := NewCase(tt.tokenSource)
 
 		if err := caseGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)

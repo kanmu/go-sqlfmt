@@ -31,7 +31,7 @@ func TestReindentJoinGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		buf := &bytes.Buffer{}
-		joinGroup := &Join{Element: tt.tokenSource}
+		joinGroup := NewJoin(tt.tokenSource)
 
 		if err := joinGroup.Reindent(buf); err != nil {
 			t.Errorf("unexpected error: %v", err)
