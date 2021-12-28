@@ -8,11 +8,11 @@ import (
 )
 
 func TestGetTokens(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
 	options := defaultOptions()
 
-	var testingSQLStatement = `select name, age,'age',sum,z+d^2, sum(case when x = xxx then false else true end)
+	var testingSQLStatement = `select name, age,'age',sum,z+d^2, sum(case when x = xxx then false else true end), "old"
 		from user where name + xxx = 0 and 'age' = 'xxx' limit 100 except 100`
 
 	want := []Token{
@@ -44,6 +44,8 @@ func TestGetTokens(t *testing.T) {
 		{Type: RESERVEDVALUE, Value: "TRUE"},
 		{Type: END, Value: "END"},
 		{Type: ENDPARENTHESIS, Value: ")"},
+		{Type: COMMA, Value: ","},
+		{Type: STRING, Value: `"old"`},
 
 		{Type: FROM, Value: "FROM"},
 		{Type: IDENT, Value: "user"},
@@ -90,7 +92,7 @@ func TestGetTokens(t *testing.T) {
 }
 
 func TestIsWhiteSpace(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 
 	tests := []struct {
 		name string
@@ -122,7 +124,8 @@ func TestIsWhiteSpace(t *testing.T) {
 		tt := toPin
 
 		t.Run(tt.name, func(t *testing.T) {
-			// t.Parallel()
+			t.Parallel()
+
 			require.Equal(t, tt.want, isWhiteSpace(tt.src))
 		})
 	}
@@ -155,7 +158,7 @@ func TestScan(t *testing.T) {
 		tt := toPin
 
 		t.Run(tt.name, func(t *testing.T) {
-			// t.Parallel()
+			t.Parallel()
 
 			tnz := NewTokenizer(tt.src)
 

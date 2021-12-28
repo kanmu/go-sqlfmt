@@ -111,14 +111,20 @@ func (t *Tokenizer) scan() (bool, error) {
 
 	case isSingleQuote(ch):
 		// extract quoted string
-		// TODO: use start rune
 		if err := t.scanString(ch); err != nil {
 			return false, err
 		}
 
 		return false, nil
 
-	//case isDoubleQuote(ch): // TODO
+	case isDoubleQuote(ch):
+		// extract double quoted string
+		if err := t.scanDoubleQuotedString(ch); err != nil {
+			return false, err
+		}
+
+		return false, nil
+
 	case isComma(ch):
 		token := Token{Type: COMMA, Value: Comma, options: t.options}
 		t.result = append(t.result, token)
@@ -220,7 +226,7 @@ LOOP:
 	return nil
 }
 
-// scan string token including single quotes.
+// scanString extracts a string token surrounded by single quotes.
 func (t *Tokenizer) scanString(start rune) error {
 	var err error
 	ch := start
@@ -234,6 +240,37 @@ func (t *Tokenizer) scanString(start rune) error {
 		}
 
 		if isSingleQuote(ch) {
+			_, _ = t.w.WriteRune(ch)
+
+			break
+		}
+
+		if isEOF(ch) {
+			break
+		}
+	}
+
+	tok := Token{Type: STRING, Value: t.w.String(), options: t.options}
+	t.result = append(t.result, tok)
+	t.w.Reset()
+
+	return nil
+}
+
+// scanDoubleQuotedString extracts a string token surrounded by double quotes.
+func (t *Tokenizer) scanDoubleQuotedString(start rune) error {
+	var err error
+	ch := start
+
+	for {
+		_, _ = t.w.WriteRune(ch)
+
+		ch, err = t.Read()
+		if err != nil {
+			return err
+		}
+
+		if isDoubleQuote(ch) {
 			_, _ = t.w.WriteRune(ch)
 
 			break
@@ -299,7 +336,7 @@ func (t *Tokenizer) isOperatorToken(start rune) (Token, bool, int, error) {
 	return Token{}, false, counter, nil
 }
 
-// scanOperator extracts an operator
+// scanOperator extracts an operator.
 func (t *Tokenizer) scanOperator(ch rune) (bool, error) {
 	token, ok, counter, err := t.isOperatorToken(ch)
 	if ok {
@@ -343,9 +380,9 @@ LOOP:
 			break LOOP
 		default:
 			if isOperator(ch) {
-				_, isOperator, consumed, err := t.isOperatorToken(ch)
-				if err != nil {
-					return err
+				_, isOperator, consumed, ert := t.isOperatorToken(ch)
+				if ert != nil {
+					return ert
 				}
 
 				// rewind looked-ahead runes
@@ -402,20 +439,22 @@ func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
 	}
 
 	ttype, ok := typeWithParenMap[v]
-	if ok {
-		if ttype == TYPE ||
-			ttype == OPERATOR ||
-			ttype == RESERVEDVALUE {
-			return ttype, ok
-		}
+	if !ok {
+		return IDENT, false
+	}
 
-		if ttype == FUNCTION {
-			t.Unread()
-			if r, err := t.Read(); err == nil {
-				// TODO: some functions may be called without parenthesis --> consider as RESERVED_VALUES ??
-				if isStartParenthesis(r) {
-					return ttype, true
-				}
+	if ttype == TYPE ||
+		ttype == OPERATOR ||
+		ttype == RESERVEDVALUE {
+		return ttype, ok
+	}
+
+	if ttype == FUNCTION {
+		t.Unread()
+		if r, err := t.Read(); err == nil {
+			// TODO: some functions may be called without parenthesis --> consider as RESERVED_VALUES ??
+			if isStartParenthesis(r) {
+				return ttype, true
 			}
 		}
 	}

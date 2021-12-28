@@ -1,6 +1,27 @@
 package lexer
 
-import "unicode"
+import (
+	"unicode"
+
+	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer/internal/scanner"
+)
+
+// value of literal.
+const (
+	Comma            = ","
+	StartParenthesis = "("
+	EndParenthesis   = ")"
+	StartBracket     = "["
+	EndBracket       = "]"
+	StartBrace       = "{"
+	EndBrace         = "}"
+	SingleQuote      = "'"
+	NewLine          = "\n"
+	SemiColon        = ";"
+)
+
+// rune that can't be contained in SQL statement.
+const eof = scanner.EOFRune
 
 func isWhiteSpace(ch rune) bool {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' || ch == '　' || unicode.IsSpace(ch)

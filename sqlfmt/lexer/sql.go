@@ -6,36 +6,13 @@ import (
 	iradix "github.com/hashicorp/go-immutable-radix"
 )
 
-// value of literal.
-const (
-	Comma            = ","
-	StartParenthesis = "("
-	EndParenthesis   = ")"
-	StartBracket     = "["
-	EndBracket       = "]"
-	StartBrace       = "{"
-	EndBrace         = "}"
-	SingleQuote      = "'"
-	NewLine          = "\n"
-	SemiColon        = ";"
-	// TODO: \r, \t, \f
-)
-
 var (
-	// rune that can't be contained in SQL statement
-	// TODO: I have to make better solution of making rune of eof instead of using '∂'.
-	eof rune
-
 	sqlKeywordMap     map[string]TokenType
 	typeWithParenMap  map[string]TokenType
 	operatorsIndex    *iradix.Tree
 	maxOperatorLength int
 	maxOperatorBytes  int
 )
-
-func init() {
-	eof = '∂'
-}
 
 func init() {
 	sqlKeywordMap = map[string]TokenType{
