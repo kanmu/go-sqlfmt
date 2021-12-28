@@ -110,6 +110,58 @@ func TestGetTokens(t *testing.T) {
 	}
 }
 
+func TestGetTokensEdge(t *testing.T) {
+	t.Parallel()
+
+	options := defaultOptions()
+
+	tests := []struct {
+		name string
+		src  string
+		want []Token
+	}{
+		{
+			name: "escape sequence literal",
+			src:  `SELECT E'abc', X'123',B'123'`,
+			want: []Token{
+				{Type: SELECT, Value: "SELECT"},
+				{Type: STRING, Value: "E'abc'"},
+				{Type: COMMA, Value: ","},
+				{Type: STRING, Value: "X'123'"},
+				{Type: COMMA, Value: ","},
+				{Type: STRING, Value: "B'123'"},
+				{Type: EOF, Value: "EOF"},
+			},
+		},
+		{
+			name: "unicode sequence literal",
+			src:  `SELECT U&'abc'`,
+			want: []Token{
+				{Type: SELECT, Value: "SELECT"},
+				{Type: STRING, Value: "U&'abc'"},
+				{Type: EOF, Value: "EOF"},
+			},
+		},
+	}
+
+	for _, toPin := range tests {
+		tt := toPin
+
+		t.Run(tt.name, func(t *testing.T) {
+			// t.Parallel()
+
+			tnz := NewTokenizer(tt.src)
+			tnz.options = options
+			for i := range tt.want {
+				tt.want[i].options = options
+			}
+			got, err := tnz.GetTokens()
+			require.NoError(t, err)
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
 func TestIsWhiteSpace(t *testing.T) {
 	t.Parallel()
 
@@ -193,16 +245,18 @@ func TestScanWhiteSpace(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name string
-		src  string
-		want Token
-		next rune
+		name        string
+		src         string
+		want        Token
+		next        rune
+		expectEmpty bool
 	}{
 		{
 			name: "whitespace test case 1",
 			src:  ` `,
-			want: Token{Type: WS, Value: " "},
-			next: eof,
+			// want:        Token{Type: WS, Value: " "}, // do not generate WS tokens
+			next:        eof,
+			expectEmpty: true,
 		},
 		{
 			name: "whitespace test case 2",
@@ -237,6 +291,13 @@ func TestScanWhiteSpace(t *testing.T) {
 
 			require.NoError(t, tnz.scanWhiteSpace(ch))
 
+			if tt.expectEmpty {
+				require.Empty(t, tnz.result)
+
+				return
+			}
+
+			require.NotEmpty(t, tnz.result)
 			require.EqualValues(t, tt.want, tnz.result[0])
 
 			ch, err = tnz.Read()

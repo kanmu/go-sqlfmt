@@ -4,14 +4,6 @@ package lexer
 type TokenType int
 
 // Token types.
-//
-// TODO:
-//  * [x] operators: +, *, /, -, <>, !=, ->, @,  ||, ,...
-//  * [x] reserved values (e.g. TRUE, FALSE, TIMESTAMP, Infinity, -Infinity, NaN)
-//  * literals, e.g. &U(xxx), B(xyz)
-//  * comments
-//  * DOMAIN
-//.
 const (
 	EOF TokenType = 1 + iota // eof
 
@@ -103,6 +95,7 @@ const (
 	THEN
 	TIME
 	TO
+	UESCAPE
 	UNBOUNDED
 	UNION
 	UPDATE

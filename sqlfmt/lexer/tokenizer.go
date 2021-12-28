@@ -62,24 +62,38 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 			// LEFT depends on context: may be keyword or function
 			tok = Token{Type: FUNCTION, Value: tok.Value, options: t.options}
 
-		case tok.Type == TYPE && i < len(tokens)-1 && tokens[i+1].Type == VARYING,
-			tok.Type == DOUBLE && i < len(tokens)-1 && tokens[i+1].Type == PRECISION:
+		// composed types
+		case i < len(tokens)-1 && isComposedType(tok, tokens[i+1]):
 			// build single type from double token
 			composed := composedToken(tok.Value, tokens[i+1].Value)
+			ttype := typeWithParenMap[composed]
+			tok = Token{Type: ttype, Value: composed, options: t.options}
 
-			ttype, ok := typeWithParenMap[composed]
-			if ok {
-				tok = Token{Type: ttype, Value: composed, options: t.options}
-			}
-		case tok.Type == VARYING && i > 0 && tokens[i-1].Type == TYPE,
-			tok.Type == PRECISION && i > 0 && tokens[i-1].Type == DOUBLE:
-			// skip token if previously composed above
-			composed := composedToken(tokens[i-1].Value, tok.Value)
+		case i > 0 && isComposedType(tokens[i-1], tok):
+			continue
 
-			_, ok := typeWithParenMap[composed]
-			if ok {
-				continue
+		// literal constant builders
+		case i < len(tokens)-1 && isConstantBuilder(tok, tokens[i+1]):
+			val := strings.ToUpper(tok.Value)
+			ttype := constantBuilders[val]
+			tok = Token{Type: ttype, Value: concatToken(val, tokens[i+1].Value), options: t.options}
+		case i > 0 && isConstantBuilder(tokens[i-1], tok):
+			continue
+
+		// unicode constant builder
+		case i < len(tokens)-2 && isUnicodeBuilder(tok, tokens[i+1], tokens[i+2]):
+			tok = Token{
+				Type: STRING, Value: concatToken(
+					strings.ToUpper(tok.Value),
+					tokens[i+1].Value,
+					tokens[i+2].Value,
+				),
+				options: t.options,
 			}
+		case i > 0 && i < len(tokens)-1 && isUnicodeBuilder(tokens[i-1], tok, tokens[i+1]):
+			continue
+		case i > 1 && isUnicodeBuilder(tokens[i-2], tokens[i-1], tok):
+			continue
 		}
 
 		result = append(result, tok)
@@ -231,18 +245,12 @@ LOOP:
 		}
 	}
 
-	/*
-		// TODO: remove / these tokens are removed anyway
-		if strings.Contains(t.w.String(), "\n") {
-			// TODO: when does this occur?
-			tok := Token{Type: NEWLINE, Value: "\n", options: t.options}
-			t.result = append(t.result, tok)
-		} else {
-			// TODO: why do we add whitespace token?
-			tok := Token{Type: WS, Value: t.w.String(), options: t.options}
-			t.result = append(t.result, tok)
-		}
-	*/
+	// for the moment, we maintain NEWLINE as there are a few subtle lexing semantics
+	// that remain hooked on the present of a NEWLINE (e.g. multiline literals).
+	if strings.Contains(t.w.String(), "\n") {
+		tok := Token{Type: NEWLINE, Value: "\n", options: t.options}
+		t.result = append(t.result, tok)
+	}
 
 	t.w.Reset()
 
@@ -487,4 +495,37 @@ func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
 
 func composedToken(values ...string) string {
 	return strings.Join(values, " ")
+}
+
+func concatToken(values ...string) string {
+	return strings.Join(values, "")
+}
+
+func isComposedType(tok, next Token) bool {
+	if !(tok.Type == TYPE && next.Type == VARYING ||
+		tok.Type == DOUBLE && next.Type == PRECISION) {
+		return false
+	}
+
+	_, ok := typeWithParenMap[composedToken(tok.Value, next.Value)]
+
+	return ok
+}
+
+func isConstantBuilder(tok, next Token) bool {
+	if !(tok.Type == IDENT && len(tok.Value) == 1 && next.Type == STRING &&
+		len(next.Value) > 0 && strings.ContainsRune(next.Value[:1], '\'')) {
+		return false
+	}
+
+	val := strings.ToUpper(tok.Value)
+	_, ok := constantBuilders[val]
+
+	return ok
+}
+
+func isUnicodeBuilder(tok, next, nnext Token) bool {
+	return tok.Type == IDENT && len(tok.Value) == 1 && strings.EqualFold(tok.Value, "U") &&
+		next.Type == OPERATOR && len(next.Value) == 1 && strings.ContainsRune(next.Value, '&') &&
+		nnext.Type == STRING && len(nnext.Value) > 0 && strings.ContainsRune(nnext.Value[:1], '\'')
 }

@@ -9,6 +9,7 @@ import (
 var (
 	sqlKeywordMap     map[string]TokenType
 	typeWithParenMap  map[string]TokenType
+	constantBuilders  map[string]TokenType
 	operatorsIndex    *iradix.Tree
 	maxOperatorLength int
 	maxOperatorBytes  int
@@ -557,6 +558,7 @@ func init() {
 		"POINT":         TYPE,
 		"POLYGON":       TYPE,
 		"RANGE":         TYPE, // TODO: or FUNCTION?
+		"REAL":          TYPE,
 		"REGCLASS":      TYPE,
 		"REGCOLLATION":  TYPE,
 		"REGCONFIG":     TYPE,
@@ -622,7 +624,8 @@ func init() {
 		"->>": OPERATOR,
 		"-|-": OPERATOR,
 		"/":   OPERATOR,
-		"::":  OPERATOR,
+		":":   OPERATOR, // array slice
+		"::":  OPERATOR, // cast
 		"<":   OPERATOR,
 		"<->": OPERATOR,
 		"<<":  OPERATOR,
@@ -661,7 +664,14 @@ func init() {
 		"~":   OPERATOR,
 		"~=":  OPERATOR,
 	}
+
 	// TODO: literals such as U&""
+	constantBuilders = map[string]TokenType{
+		"E":  STRING,
+		"B":  STRING,
+		"X":  STRING,
+		"U&": STRING,
+	}
 
 	operatorsIndex = iradix.New()
 	for key, ttype := range typeWithParenMap {
