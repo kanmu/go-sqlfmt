@@ -51,9 +51,9 @@ func (t Token) formatKeyword() string {
 			in = "-Infinity"
 		}
 	case FUNCTION:
-		recased, ok := casedFunctions[t.Value]
+		recased, ok := casedFunctions.Get([]byte(t.Value))
 		if ok {
-			in = recased
+			in = recased.(string)
 		}
 	}
 

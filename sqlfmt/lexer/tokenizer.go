@@ -65,7 +65,8 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 		case i < len(tokens)-1 && isComposedType(tok, tokens[i+1]):
 			// build single type from double token
 			composed := composedToken(tok.Value, tokens[i+1].Value)
-			ttype := typeWithParentMap[composed]
+			val, _ := typeWithParentMap.Get([]byte(composed))
+			ttype := val.(TokenType)
 			tok = Token{Type: ttype, Value: composed, options: t.options}
 
 		case i > 0 && isComposedType(tokens[i-1], tok):
@@ -74,7 +75,8 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 		// literal constant builders
 		case i < len(tokens)-1 && isConstantBuilder(tok, tokens[i+1]):
 			val := strings.ToUpper(tok.Value)
-			ttype := constantBuilders[val]
+			valType, _ := constantBuilders.Get([]byte(val))
+			ttype := valType.(TokenType)
 			tok = Token{Type: ttype, Value: concatToken(val, tokens[i+1].Value), options: t.options}
 		case i > 0 && isConstantBuilder(tokens[i-1], tok):
 			continue
@@ -341,7 +343,7 @@ func (t *Tokenizer) isOperatorToken(start rune) (Token, bool, int, error) {
 	for {
 		_, _ = w.WriteRune(ch)
 
-		if _, ok := operatorsIndex.Root().Get(w.Bytes()); ok {
+		if _, ok := operatorsIndex.Get(w.Bytes()); ok {
 			// There is a legit operator corresponding to that sequence.
 			// Keep it, and find out if we have a longer match.
 			token = w.String()
@@ -470,14 +472,17 @@ func (t *Tokenizer) append(v string) {
 }
 
 func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
-	if ttype, ok := sqlKeywordMap[v]; ok {
-		return ttype, ok
+	key := []byte(v)
+	val, ok := sqlKeywordMap.Get(key)
+	if ok {
+		return val.(TokenType), ok
 	}
 
-	ttype, ok := typeWithParentMap[v]
+	val, ok = typeWithParentMap.Get(key)
 	if !ok {
 		return IDENT, false
 	}
+	ttype := val.(TokenType)
 
 	if ttype == TYPE ||
 		ttype == OPERATOR ||
@@ -512,7 +517,7 @@ func isComposedType(tok, next Token) bool {
 		return false
 	}
 
-	_, ok := typeWithParentMap[composedToken(tok.Value, next.Value)]
+	_, ok := typeWithParentMap.Get([]byte(composedToken(tok.Value, next.Value)))
 
 	return ok
 }
@@ -523,8 +528,8 @@ func isConstantBuilder(tok, next Token) bool {
 		return false
 	}
 
-	val := strings.ToUpper(tok.Value)
-	_, ok := constantBuilders[val]
+	val := bytes.ToUpper([]byte(tok.Value))
+	_, ok := constantBuilders.Get(val)
 
 	return ok
 }

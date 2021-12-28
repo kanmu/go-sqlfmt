@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"strings"
+	"bytes"
 	"sync"
 	"unicode/utf8"
 
@@ -26,12 +26,14 @@ type SQLRegistry interface {
 //
 // These maps are allocated only upon first usage of the lexer and not at package import time.
 var (
-	sqlKeywordMap        map[string]TokenType
-	typeWithParentMap    map[string]TokenType
-	constantBuilders     map[string]TokenType
-	casedFunctions       map[string]string
-	operatorsIndex       *iradix.Tree
-	registriesMap        map[string]struct{}
+	sqlKeywordMap     *iradix.Tree
+	typeWithParentMap *iradix.Tree
+	constantBuilders  *iradix.Tree
+	casedFunctions    *iradix.Tree
+	operatorsIndex    *iradix.Tree
+
+	registriesMap map[string]struct{}
+
 	registriesMx         sync.Mutex
 	onceRegister         sync.Once
 	onceRegisterDefaults sync.Once
@@ -49,9 +51,9 @@ func init() {
 func Register(registries ...SQLRegistry) {
 	onceRegister.Do(func() {
 		registriesMap = make(map[string]struct{})
-		typeWithParentMap = make(map[string]TokenType)
-		constantBuilders = make(map[string]TokenType)
-		casedFunctions = make(map[string]string)
+		typeWithParentMap = iradix.New()
+		constantBuilders = iradix.New()
+		casedFunctions = iradix.New()
 		operatorsIndex = iradix.New()
 
 		registerKeywords()
@@ -69,7 +71,7 @@ func Register(registries ...SQLRegistry) {
 		registriesMap[registry.Name()] = struct{}{}
 
 		for _, builder := range registry.ConstantBuilders() {
-			constantBuilders[builder] = STRING
+			constantBuilders, _, _ = constantBuilders.Insert([]byte(builder), STRING)
 		}
 
 		for _, key := range registry.Operators() {
@@ -80,24 +82,25 @@ func Register(registries ...SQLRegistry) {
 				maxOperatorLength = maxRunes
 			}
 
-			operatorsIndex, _, _ = operatorsIndex.Insert([]byte(key), OPERATOR)
-
-			// TODO: replace by iradix
-			typeWithParentMap[key] = OPERATOR
+			ukey := bytes.ToUpper([]byte(key))
+			operatorsIndex, _, _ = operatorsIndex.Insert(ukey, OPERATOR)
+			typeWithParentMap, _, _ = typeWithParentMap.Insert(ukey, OPERATOR)
 		}
 
 		for _, key := range registry.Types() {
-			typeWithParentMap[strings.ToUpper(key)] = TYPE
+			ukey := bytes.ToUpper([]byte(key))
+			typeWithParentMap, _, _ = typeWithParentMap.Insert(ukey, TYPE)
 		}
 
 		for _, key := range registry.Functions() {
-			ukey := strings.ToUpper(key)
-			typeWithParentMap[ukey] = FUNCTION
-			casedFunctions[ukey] = key
+			ukey := bytes.ToUpper([]byte(key))
+			typeWithParentMap, _, _ = typeWithParentMap.Insert(ukey, FUNCTION)
+			casedFunctions, _, _ = casedFunctions.Insert(ukey, key)
 		}
 
 		for _, key := range registry.ReservedValues() {
-			typeWithParentMap[strings.ToUpper(key)] = RESERVEDVALUE
+			ukey := bytes.ToUpper([]byte(key))
+			typeWithParentMap, _, _ = typeWithParentMap.Insert(ukey, RESERVEDVALUE)
 		}
 	}
 }
@@ -114,7 +117,9 @@ func registerDefaults() {
 // This list does not contain data types, functions, operators, reserved values and
 // literal constructors.
 func registerKeywords() {
-	sqlKeywordMap = map[string]TokenType{
+	sqlKeywordMap = iradix.New()
+
+	localMap := map[string]TokenType{
 		// SQL keywords
 		"ALL":           ALL,
 		"AND":           AND,
@@ -203,5 +208,9 @@ func registerKeywords() {
 		"WITHIN":        WITHIN,
 		"XMLNAMESPACES": XMLNAMESPACES,
 		"ZONE":          ZONE,
+	}
+
+	for key, val := range localMap {
+		sqlKeywordMap, _, _ = sqlKeywordMap.Insert([]byte(key), val)
 	}
 }
