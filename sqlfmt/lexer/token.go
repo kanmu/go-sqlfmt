@@ -2,106 +2,25 @@ package lexer
 
 import (
 	"bytes"
+	"fmt"
 )
-
-// Token types.
-//
-//
-const (
-	EOF TokenType = 1 + iota // eof
-	WS                       // white space
-	NEWLINE
-	FUNCTION
-	COMMA
-	STARTPARENTHESIS
-	ENDPARENTHESIS
-	STARTBRACKET
-	ENDBRACKET
-	STARTBRACE
-	ENDBRACE
-	TYPE
-	IDENT  // field or table name
-	STRING // values surrounded with single quotes
-	SELECT
-	FROM
-	WHERE
-	CASE
-	ORDER
-	BY
-	AS
-	JOIN
-	LEFT
-	RIGHT
-	INNER
-	OUTER
-	ON
-	WHEN
-	END
-	GROUP
-	DESC
-	ASC
-	LIMIT
-	AND
-	ANDGROUP
-	OR
-	ORGROUP
-	IN
-	IS
-	NOT
-	NULL
-	DISTINCT
-	LIKE
-	BETWEEN
-	UNION
-	ALL
-	HAVING
-	OVER
-	EXISTS
-	UPDATE
-	SET
-	RETURNING
-	DELETE
-	INSERT
-	INTO
-	DO
-	VALUES
-	FOR
-	THEN
-	ELSE
-	DISTINCTROW
-	FILTER
-	WITHIN
-	COLLATE
-	INTERVAL
-	INTERSECT
-	EXCEPT
-	OFFSET
-	FETCH
-	FIRST
-	ROWS
-	USING
-	OVERLAPS
-	NATURAL
-	CROSS
-	ZONE
-	NULLS
-	LAST
-	AT
-	LOCK
-	WITH
-
-	QUOTEAREA
-	SURROUNDING
-)
-
-// TokenType is an alias type that represents a kind of token.
-type TokenType int
 
 // Token is a token struct.
 type Token struct {
 	Type  TokenType
 	Value string
 	*options
+}
+
+// MakeToken builds an immutable token.
+func MakeToken(ttype TokenType, value string, opts ...Option) Token {
+	o := defaultOptions(opts...)
+
+	return Token{
+		Type:    ttype,
+		Value:   value,
+		options: o,
+	}
 }
 
 // Reindent is a placeholder for implementing Reindenter interface.
@@ -120,7 +39,21 @@ func (t Token) formatKeyword() string {
 	in := t.Value
 
 	if t.recaser != nil {
-		in = t.recaser(in)
+		switch t.Type {
+		case STRING, IDENT:
+			// no op
+		case RESERVEDVALUE:
+			switch t.Value {
+			case "NAN":
+				in = "NaN"
+			case "INFINITY":
+				in = "Infinity"
+			case "-INFINITY":
+				in = "-Infinity"
+			}
+		default:
+			in = t.recaser(in)
+		}
 	}
 
 	if t.colorizer != nil {
@@ -131,6 +64,10 @@ func (t Token) formatKeyword() string {
 }
 
 func (t Token) formatPunctuation() string {
+	if t.Type == SEMICOLON {
+		return fmt.Sprintf("%s%s", NewLine, t.Value)
+	}
+
 	return t.Value
 }
 
@@ -141,14 +78,15 @@ func (t Token) FormattedValue() string {
 		WS,
 		NEWLINE,
 		COMMA,
+		SEMICOLON,
 		STARTPARENTHESIS,
 		ENDPARENTHESIS,
 		STARTBRACKET,
 		ENDBRACKET,
 		STARTBRACE,
-		ENDBRACE,
-		ANDGROUP,
-		ORGROUP:
+		ENDBRACE:
+		// ANDGROUP,
+		// ORGROUP:
 		return t.formatPunctuation()
 	default:
 		return t.formatKeyword()
@@ -217,8 +155,17 @@ var (
 )
 
 func init() {
-	TokenTypesOfGroupMaker = []TokenType{SELECT, CASE, FROM, WHERE, ORDER, GROUP, LIMIT, ANDGROUP, ORGROUP, HAVING, UNION, EXCEPT, INTERSECT, FUNCTION, STARTPARENTHESIS, TYPE}
-	TokenTypesOfJoinMaker = []TokenType{JOIN, INNER, OUTER, LEFT, RIGHT, NATURAL, CROSS}
+	TokenTypesOfGroupMaker = []TokenType{
+		SELECT, CASE, FROM, WHERE, ORDER, GROUP, LIMIT,
+		ANDGROUP, ORGROUP, HAVING,
+		UNION, EXCEPT, INTERSECT,
+		FUNCTION,
+		STARTPARENTHESIS,
+		TYPE,
+	}
+	TokenTypesOfJoinMaker = []TokenType{
+		JOIN, INNER, OUTER, LEFT, RIGHT, NATURAL, CROSS, LATERAL,
+	}
 	TokenTypeOfTieClause = []TokenType{UNION, INTERSECT, EXCEPT}
 	TokenTypeOfLimitClause = []TokenType{LIMIT, FETCH, OFFSET}
 }
@@ -258,7 +205,14 @@ func (t Token) IsLimitClauseStart() bool {
 
 // IsNeedNewLineBefore returns true if token needs new line before written in buffer.
 func (t Token) IsNeedNewLineBefore() bool {
-	var ttypes = []TokenType{SELECT, UPDATE, INSERT, DELETE, ANDGROUP, FROM, GROUP, ORGROUP, ORDER, HAVING, LIMIT, OFFSET, FETCH, RETURNING, SET, UNION, INTERSECT, EXCEPT, VALUES, WHERE, ON, USING, UNION, EXCEPT, INTERSECT}
+	var ttypes = []TokenType{
+		SELECT, UPDATE, INSERT, DELETE,
+		ANDGROUP,
+		FROM, GROUP, ORGROUP,
+		ORDER, HAVING, LIMIT, OFFSET, FETCH, RETURNING,
+		SET, UNION, INTERSECT, EXCEPT, VALUES,
+		WHERE, ON, USING, UNION, EXCEPT, INTERSECT,
+	}
 	for _, v := range ttypes {
 		if t.Type == v {
 			return true
@@ -270,5 +224,17 @@ func (t Token) IsNeedNewLineBefore() bool {
 
 // IsKeyWordInSelect returns true if token is a keyword in select group.
 func (t Token) IsKeyWordInSelect() bool {
-	return t.Type == SELECT || t.Type == EXISTS || t.Type == DISTINCT || t.Type == DISTINCTROW || t.Type == INTO || t.Type == AS || t.Type == GROUP || t.Type == ORDER || t.Type == BY || t.Type == ON || t.Type == RETURNING || t.Type == SET || t.Type == UPDATE
+	return t.Type == SELECT ||
+		t.Type == EXISTS ||
+		t.Type == DISTINCT ||
+		t.Type == DISTINCTROW ||
+		t.Type == INTO ||
+		t.Type == AS ||
+		t.Type == GROUP ||
+		t.Type == ORDER ||
+		t.Type == BY ||
+		t.Type == ON ||
+		t.Type == RETURNING ||
+		t.Type == SET ||
+		t.Type == UPDATE
 }

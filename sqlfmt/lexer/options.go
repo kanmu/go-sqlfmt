@@ -58,6 +58,8 @@ func Colorized() Option {
 				return color.CyanString(in)
 			case TYPE:
 				return color.MagentaString(in)
+			case RESERVEDVALUE:
+				return color.HiBlueString(in)
 			default:
 				return color.YellowString(in)
 			}
@@ -69,5 +71,19 @@ func Colorized() Option {
 func LowerCased() Option {
 	return func(opt *options) {
 		opt.recaser = strings.ToLower
+	}
+}
+
+// WithOptionsFrom replicates some options from another token.
+func WithOptionsFrom(like Token) Option {
+	return func(opt *options) {
+		var o *options
+		if like.options == nil {
+			o = defaultOptions()
+		} else {
+			o = like.options
+		}
+
+		*opt = *o
 	}
 }
