@@ -34,12 +34,9 @@ func TestFormat(t *testing.T) {
 	for _, tt := range formatTestingData {
 		t.Run(tt.src, func(t *testing.T) {
 			got, err := Format(tt.src)
-			if err != nil {
-				t.Errorf("should be nil, got %v", err)
-			}
-			if tt.want != got {
-				t.Errorf("\nwant %#v, \ngot %#v", tt.want, got)
-			}
+			require.NoError(t, err)
+
+			require.EqualValues(t, tt.want, got)
 		})
 	}
 }
@@ -91,7 +88,7 @@ ON xxx = xxx
 LEFT OUTER JOIN xxx
 ON xxx = xxx
 WHERE xxx = xxx
-AND xxx = true
+AND xxx = TRUE
 AND xxx IS NULL`,
 	},
 	{
@@ -390,8 +387,8 @@ FROM xxx`,
 		    baz`,
 		want: `
 SELECT
-  array []
-  , array [1]
+  ARRAY []
+  , ARRAY [1]
 FROM baz`,
 	},
 
@@ -410,7 +407,7 @@ FROM baz`,
 		want: `
 SELECT
   foo
-  , array (
+  , ARRAY(
     SELECT
       bar
     FROM quz
@@ -487,8 +484,8 @@ SELECT
   , foo BETWEEN 1 @> 1 AND bar
   , foo BETWEEN @1 AND bar
   , foo BETWEEN 5 ! AND bar
-  , false BETWEEN foo IS document AND bar
-  , false BETWEEN foo IS NOT document AND bar
+  , FALSE BETWEEN foo IS DOCUMENT AND bar
+  , FALSE BETWEEN foo IS NOT DOCUMENT AND bar
 FROM baz`,
 	},
 	{
@@ -537,8 +534,8 @@ FROM t`,
 		want: `
 SELECT
   NOT foo
-  , NOT true
-  , NOT false
+  , NOT TRUE
+  , NOT FALSE
   , CASE
       WHEN foo = bar THEN 7
       WHEN foo > bar THEN 42
@@ -758,7 +755,7 @@ FROM quz`,
 		want: `
 SELECT
   INTERVAL '5'
-  , INTERVAL '5' hour
+  , INTERVAL '5' HOUR
   , INTERVAL '5' hour to minute
   , INTERVAL '5' SECOND(5)
   , INTERVAL(2) '10.324'`,
@@ -847,7 +844,7 @@ SELECT
 		want: `
 SELECT
   foo
-  , ROW_NUMBER() OVER(range unbounded preceding)
+  , ROW_NUMBER() OVER(range UNBOUNDED PRECEDING)
 FROM baz`,
 	},
 	{
@@ -864,7 +861,7 @@ FROM xxx`,
 	{
 		src: `lock table in xxx`,
 		want: `
-LOCK table
+LOCK TABLE
 IN xxx`,
 	},
 }

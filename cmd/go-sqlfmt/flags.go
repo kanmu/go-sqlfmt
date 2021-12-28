@@ -14,11 +14,12 @@ type cliOptions struct {
 	Write bool
 	Diff  bool
 
-	Distance   int
-	IsRawSQL   bool
-	Colorized  bool
-	LowerCased bool
-	CommaStyle string
+	Distance    int
+	IsRawSQL    bool
+	Colorized   bool
+	LowerCased  bool
+	WithPostgis bool
+	CommaStyle  string
 }
 
 func (o cliOptions) ToOptions() []sqlfmt.Option {
@@ -28,6 +29,7 @@ func (o cliOptions) ToOptions() []sqlfmt.Option {
 	opts = append(opts, sqlfmt.WithRawSQL(o.IsRawSQL))
 	opts = append(opts, sqlfmt.WithColorized(o.Colorized))
 	opts = append(opts, sqlfmt.WithLowerCased(o.LowerCased))
+	opts = append(opts, sqlfmt.WithPostgis(o.WithPostgis))
 
 	var style group.CommaStyle
 	if o.CommaStyle == "right" {
@@ -62,6 +64,7 @@ func init() {
 	flag.BoolVar(&options.Colorized, "colorized", defaultCliOptions().Colorized, "colorize output")
 	flag.BoolVar(&options.LowerCased, "lower", defaultCliOptions().LowerCased, "SQL keywords are lower-cased")
 	flag.StringVar(&options.CommaStyle, "comma-style", defaultCliOptions().CommaStyle, "justify commas to the left or the right [left|right]")
+	flag.BoolVar(&options.WithPostgis, "postgis", defaultCliOptions().WithPostgis, "postgis support")
 }
 
 func usage() {

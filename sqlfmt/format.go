@@ -19,8 +19,8 @@ import (
 func Format(src string, opts ...Option) (string, error) {
 	o := defaultOptions(opts...)
 
-	t := lexer.NewTokenizer(src, o.ToLexerOptions()...)
-	tokens, err := t.GetTokens()
+	tokenizer := lexer.NewTokenizer(src, o.ToLexerOptions()...)
+	tokens, err := tokenizer.GetTokens()
 	if err != nil {
 		return src, errors.Wrap(err, "Tokenize failed")
 	}
