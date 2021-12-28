@@ -1,8 +1,10 @@
 package lexer
 
 import (
+	"sync"
 	"testing"
 
+	"github.com/fredbi/go-sqlfmt/sqlfmt/lexer/postgis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -148,7 +150,7 @@ func TestGetTokensEdge(t *testing.T) {
 		tt := toPin
 
 		t.Run(tt.name, func(t *testing.T) {
-			// t.Parallel()
+			t.Parallel()
 
 			tnz := NewTokenizer(tt.src)
 			tnz.options = options
@@ -505,6 +507,70 @@ func TestScanOperator(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equalf(t, tt.next, ch, "expected next rune to be %q, got %q", string(tt.next), string(ch))
+		})
+	}
+}
+
+var mutex sync.Mutex
+
+func TestScanPostgis(t *testing.T) {
+	mutex.Lock()
+	// this is a critical section which is not supposed to be executed by multiple goroutines
+	Register(postgis.Registry{})
+	mutex.Unlock()
+
+	options := defaultOptions()
+
+	tests := []struct {
+		name string
+		src  string
+		want []Token
+	}{
+		{
+			name: "postgis function",
+			src:  `SELECT ST_Point(1,2,3,4)`,
+			want: []Token{
+				{Type: SELECT, Value: "SELECT"},
+				{Type: FUNCTION, Value: "ST_POINT"},
+				{Type: STARTPARENTHESIS, Value: "("},
+				{Type: IDENT, Value: "1"},
+				{Type: COMMA, Value: ","},
+				{Type: IDENT, Value: "2"},
+				{Type: COMMA, Value: ","},
+				{Type: IDENT, Value: "3"},
+				{Type: COMMA, Value: ","},
+				{Type: IDENT, Value: "4"},
+				{Type: ENDPARENTHESIS, Value: ")"},
+				{Type: EOF, Value: "EOF"},
+			},
+		},
+		{
+			name: "postgis operator",
+			src:  `SELECT a <<#>>b`,
+			want: []Token{
+				{Type: SELECT, Value: "SELECT"},
+				{Type: IDENT, Value: "a"},
+				{Type: OPERATOR, Value: "<<#>>"},
+				{Type: IDENT, Value: "b"},
+				{Type: EOF, Value: "EOF"},
+			},
+		},
+	}
+
+	for _, toPin := range tests {
+		tt := toPin
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tnz := NewTokenizer(tt.src)
+			tnz.options = options
+			for i := range tt.want {
+				tt.want[i].options = options
+			}
+			got, err := tnz.GetTokens()
+			require.NoError(t, err)
+			assert.EqualValues(t, tt.want, got)
 		})
 	}
 }

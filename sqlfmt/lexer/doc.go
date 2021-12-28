@@ -7,11 +7,11 @@
 //  * [x] reserved values (e.g. TRUE, FALSE, TIMESTAMP, Infinity, -Infinity, NaN)
 //  * [x] literals, e.g. &U(xxx), B(xyz)
 //  * [x] multi-token types (DOUBLE PRECISION, CHARACTER VARYING
-//  * register extensions
-//  * sql comments
+//  * [x] register extensions
 //  * postgis types and functions
+//  * sql comments
 //  * ambiguity when functions are called without parenthesis (e.g. current_timestamp() vs current_timestamp)
-//  * postgres advanced quoting
+//  * postgres advanced quoting ($$, nested quoting...)
 //  * replace maps by prefix keys
 //  * DOMAIN
 //

@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"strings"
 	"sync"
 	"unicode/utf8"
 
@@ -28,6 +29,7 @@ var (
 	sqlKeywordMap        map[string]TokenType
 	typeWithParentMap    map[string]TokenType
 	constantBuilders     map[string]TokenType
+	casedFunctions       map[string]string
 	operatorsIndex       *iradix.Tree
 	registriesMap        map[string]struct{}
 	registriesMx         sync.Mutex
@@ -39,8 +41,8 @@ var (
 )
 
 func init() {
-	maxOperatorLength = 3
-	maxOperatorBytes = 3
+	maxOperatorLength = 5
+	maxOperatorBytes = 5
 }
 
 // Register SQL registries into the lexer package.
@@ -49,6 +51,7 @@ func Register(registries ...SQLRegistry) {
 		registriesMap = make(map[string]struct{})
 		typeWithParentMap = make(map[string]TokenType)
 		constantBuilders = make(map[string]TokenType)
+		casedFunctions = make(map[string]string)
 		operatorsIndex = iradix.New()
 
 		registerKeywords()
@@ -84,15 +87,17 @@ func Register(registries ...SQLRegistry) {
 		}
 
 		for _, key := range registry.Types() {
-			typeWithParentMap[key] = TYPE
+			typeWithParentMap[strings.ToUpper(key)] = TYPE
 		}
 
 		for _, key := range registry.Functions() {
-			typeWithParentMap[key] = FUNCTION
+			ukey := strings.ToUpper(key)
+			typeWithParentMap[ukey] = FUNCTION
+			casedFunctions[ukey] = key
 		}
 
 		for _, key := range registry.ReservedValues() {
-			typeWithParentMap[key] = RESERVEDVALUE
+			typeWithParentMap[strings.ToUpper(key)] = RESERVEDVALUE
 		}
 	}
 }

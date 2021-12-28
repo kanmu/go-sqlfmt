@@ -106,13 +106,12 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 func (t *Tokenizer) tokenize() ([]Token, error) {
 	for {
 		isEOF, err := t.scan()
+		if err != nil {
+			return nil, err
+		}
 
 		if isEOF {
 			break
-		}
-
-		if err != nil {
-			return nil, err
 		}
 	}
 
@@ -163,36 +162,43 @@ func (t *Tokenizer) scan() (bool, error) {
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isSemiColon(ch):
 		token := Token{Type: SEMICOLON, Value: SemiColon, options: t.options}
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isStartParenthesis(ch):
 		token := Token{Type: STARTPARENTHESIS, Value: StartParenthesis, options: t.options}
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isEndParenthesis(ch):
 		token := Token{Type: ENDPARENTHESIS, Value: EndParenthesis, options: t.options}
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isStartBracket(ch):
 		token := Token{Type: STARTBRACKET, Value: StartBracket, options: t.options}
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isEndBracket(ch):
 		token := Token{Type: ENDBRACKET, Value: EndBracket, options: t.options}
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isStartBrace(ch):
 		token := Token{Type: STARTBRACE, Value: StartBrace, options: t.options}
 		t.result = append(t.result, token)
 
 		return false, nil
+
 	case isEndBrace(ch):
 		token := Token{Type: ENDBRACE, Value: EndBrace, options: t.options}
 		t.result = append(t.result, token)
@@ -244,7 +250,7 @@ LOOP:
 		}
 	}
 
-	// for the moment, we maintain NEWLINE as there are a few subtle lexing semantics
+	// NOTE(fred): for the moment, we maintain NEWLINE as there are a few subtle lexing semantics
 	// that remain hooked on the present of a NEWLINE (e.g. multiline literals).
 	if strings.Contains(t.w.String(), "\n") {
 		tok := Token{Type: NEWLINE, Value: "\n", options: t.options}
@@ -405,9 +411,9 @@ LOOP:
 			}
 
 			return nil
-		// TODO: double quoted identifiers too, $$ quoting as well
 		case isSeparator(ch):
 			break LOOP
+
 		default:
 			if isOperator(ch) {
 				_, isOperator, consumed, ert := t.isOperatorToken(ch)

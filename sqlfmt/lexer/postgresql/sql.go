@@ -497,8 +497,6 @@ func (Registry) Types() []string {
 		"FLOAT",
 		"FLOAT4",
 		"FLOAT8",
-		"GEOGRAPHY",
-		"GEOMETRY",
 		"HOUR",
 		"INET",
 		"INT",

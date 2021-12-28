@@ -50,10 +50,15 @@ func (t Token) formatKeyword() string {
 		case "-INFINITY":
 			in = "-Infinity"
 		}
-	default:
-		if t.recaser != nil {
-			in = t.recaser(in)
+	case FUNCTION:
+		recased, ok := casedFunctions[t.Value]
+		if ok {
+			in = recased
 		}
+	}
+
+	if t.recaser != nil {
+		in = t.recaser(in)
 	}
 
 	if t.colorizer != nil {
