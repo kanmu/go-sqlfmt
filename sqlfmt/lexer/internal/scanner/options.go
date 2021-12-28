@@ -11,7 +11,9 @@ type (
 )
 
 func defaultOptions(opts ...Option) *scannerOptions {
-	o := &scannerOptions{}
+	o := &scannerOptions{
+		readerOptions: []reader.Option{reader.WithLookAhead(4)},
+	}
 
 	for _, apply := range opts {
 		apply(o)

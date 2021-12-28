@@ -10,12 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type runeWriter interface {
-	WriteRune(rune) (int, error)
-	String() string
-	Reset()
-}
-
 // Tokenizer tokenizes SQL statements.
 type Tokenizer struct {
 	*scanner.RuneScanner
@@ -26,13 +20,18 @@ type Tokenizer struct {
 
 // NewTokenizer creates Tokenizer.
 func NewTokenizer(src string, opts ...Option) *Tokenizer {
-	return &Tokenizer{
+	// initialize the package with postgres as default
+	onceRegisterDefaults.Do(registerDefaults)
+
+	t := &Tokenizer{
 		RuneScanner: scanner.NewRuneScanner(src,
 			scanner.WithReaderOptions(reader.WithLookAhead(maxOperatorLength+1)),
 		),
-		w:       &bytes.Buffer{},
+		w:       newRuneWriter(),
 		options: defaultOptions(opts...),
 	}
+
+	return t
 }
 
 // GetTokens returns tokens for parsing.
@@ -66,7 +65,7 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 		case i < len(tokens)-1 && isComposedType(tok, tokens[i+1]):
 			// build single type from double token
 			composed := composedToken(tok.Value, tokens[i+1].Value)
-			ttype := typeWithParenMap[composed]
+			ttype := typeWithParentMap[composed]
 			tok = Token{Type: ttype, Value: composed, options: t.options}
 
 		case i > 0 && isComposedType(tokens[i-1], tok):
@@ -102,7 +101,7 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 	return result, nil
 }
 
-// Tokenize analyses every rune in SQL statement
+// tokenize analyses every rune in SQL statement
 // every token is identified when whitespace appears.
 func (t *Tokenizer) tokenize() ([]Token, error) {
 	for {
@@ -469,7 +468,7 @@ func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
 		return ttype, ok
 	}
 
-	ttype, ok := typeWithParenMap[v]
+	ttype, ok := typeWithParentMap[v]
 	if !ok {
 		return IDENT, false
 	}
@@ -507,7 +506,7 @@ func isComposedType(tok, next Token) bool {
 		return false
 	}
 
-	_, ok := typeWithParenMap[composedToken(tok.Value, next.Value)]
+	_, ok := typeWithParentMap[composedToken(tok.Value, next.Value)]
 
 	return ok
 }

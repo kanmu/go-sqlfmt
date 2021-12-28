@@ -38,20 +38,20 @@ func (t Token) formatKeyword() string {
 	}
 	in := t.Value
 
-	if t.recaser != nil {
-		switch t.Type {
-		case STRING, IDENT:
-			// no op
-		case RESERVEDVALUE:
-			switch t.Value {
-			case "NAN":
-				in = "NaN"
-			case "INFINITY":
-				in = "Infinity"
-			case "-INFINITY":
-				in = "-Infinity"
-			}
-		default:
+	switch t.Type {
+	case STRING, IDENT:
+		// no op
+	case RESERVEDVALUE:
+		switch t.Value {
+		case "NAN":
+			in = "NaN"
+		case "INFINITY":
+			in = "Infinity"
+		case "-INFINITY":
+			in = "-Infinity"
+		}
+	default:
+		if t.recaser != nil {
 			in = t.recaser(in)
 		}
 	}
