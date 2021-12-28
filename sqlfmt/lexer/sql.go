@@ -34,9 +34,9 @@ func init() {
 		"DESC":          DESC,
 		"DISTINCT":      DISTINCT,
 		"DISTINCTROW":   DISTINCTROW,
-		"ROW":           ROW, // TODO can be function
 		"DO":            DO,
 		"DOCUMENT":      DOCUMENT,
+		"DOUBLE":        DOUBLE,
 		"ELSE":          ELSE,
 		"END":           END,
 		"ESCAPE":        ESCAPE,
@@ -58,8 +58,8 @@ func init() {
 		"INTO":          INTO,
 		"IS":            IS,
 		"JOIN":          JOIN,
-		"LATERAL":       LATERAL,
 		"LAST":          LAST,
+		"LATERAL":       LATERAL,
 		"LEFT":          LEFT,
 		"LIKE":          LIKE,
 		"LIMIT":         LIMIT,
@@ -75,9 +75,12 @@ func init() {
 		"OUTER":         OUTER,
 		"OVERLAPS":      OVERLAPS,
 		"PASSING":       PASSING,
+		"PRECEDING":     PRECEDING,
+		"PRECISION":     PRECISION,
 		"REF":           REF,
 		"RETURNING":     RETURNING,
 		"RIGHT":         RIGHT,
+		"ROW":           ROW, // TODO can be function
 		"ROWS":          ROWS,
 		"SELECT":        SELECT,
 		"SET":           SET,
@@ -87,11 +90,13 @@ func init() {
 		"THEN":          THEN,
 		"TIME":          TIME,
 		"TO":            TO,
+		"UNBOUNDED":     UNBOUNDED,
 		"UNION":         UNION,
 		"UNKNOWN":       NULL,
 		"UPDATE":        UPDATE,
 		"USING":         USING,
 		"VALUES":        VALUES,
+		"VARYING":       VARYING,
 		"WHEN":          WHEN,
 		"WHERE":         WHERE,
 		"WINDOW":        WINDOW,
@@ -99,11 +104,6 @@ func init() {
 		"WITHIN":        WITHIN,
 		"XMLNAMESPACES": XMLNAMESPACES,
 		"ZONE":          ZONE,
-		"UNBOUNDED":     UNBOUNDED,
-		"PRECEDING":     PRECEDING,
-		"PRECISION":     PRECEDING,
-		"DOUBLE":        DOUBLE,
-		"VARYING":       VARYING,
 	}
 
 	typeWithParenMap = map[string]TokenType{
@@ -587,6 +587,11 @@ func init() {
 		"VARCHAR":       TYPE,
 		"VARIADIC":      TYPE,
 		"YEAR":          TYPE,
+
+		// multi-token types
+		"CHARACTER VARYING": TYPE,
+		"BIT VARYING":       TYPE,
+		"DOUBLE PRECISION":  TYPE,
 
 		// postgres reserved values
 		"-INFINITY": RESERVEDVALUE,

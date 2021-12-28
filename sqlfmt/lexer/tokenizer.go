@@ -51,6 +51,7 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 		case tok.Type == WS || tok.Type == NEWLINE:
 			continue
 
+		// TODO: get a better understanding of these "ORGROUP" and "ANDGROUP" -- to me doesn't look right in a lexer
 		case tok.Type == AND && tokens[i-1].Type == NEWLINE:
 			tok = Token{Type: ANDGROUP, Value: tok.Value, options: t.options}
 
@@ -60,6 +61,25 @@ func (t *Tokenizer) GetTokens() ([]Token, error) {
 		case tok.Type == LEFT && i < len(tokens)-1 && tokens[i+1].Type == STARTPARENTHESIS:
 			// LEFT depends on context: may be keyword or function
 			tok = Token{Type: FUNCTION, Value: tok.Value, options: t.options}
+
+		case tok.Type == TYPE && i < len(tokens)-1 && tokens[i+1].Type == VARYING,
+			tok.Type == DOUBLE && i < len(tokens)-1 && tokens[i+1].Type == PRECISION:
+			// build single type from double token
+			composed := composedToken(tok.Value, tokens[i+1].Value)
+
+			ttype, ok := typeWithParenMap[composed]
+			if ok {
+				tok = Token{Type: ttype, Value: composed, options: t.options}
+			}
+		case tok.Type == VARYING && i > 0 && tokens[i-1].Type == TYPE,
+			tok.Type == PRECISION && i > 0 && tokens[i-1].Type == DOUBLE:
+			// skip token if previously composed above
+			composed := composedToken(tokens[i-1].Value, tok.Value)
+
+			_, ok := typeWithParenMap[composed]
+			if ok {
+				continue
+			}
 		}
 
 		result = append(result, tok)
@@ -211,15 +231,18 @@ LOOP:
 		}
 	}
 
-	if strings.Contains(t.w.String(), "\n") {
-		// TODO: when does this occur?
-		tok := Token{Type: NEWLINE, Value: "\n", options: t.options}
-		t.result = append(t.result, tok)
-	} else {
-		// TODO: why do we add whitespace token?
-		tok := Token{Type: WS, Value: t.w.String(), options: t.options}
-		t.result = append(t.result, tok)
-	}
+	/*
+		// TODO: remove / these tokens are removed anyway
+		if strings.Contains(t.w.String(), "\n") {
+			// TODO: when does this occur?
+			tok := Token{Type: NEWLINE, Value: "\n", options: t.options}
+			t.result = append(t.result, tok)
+		} else {
+			// TODO: why do we add whitespace token?
+			tok := Token{Type: WS, Value: t.w.String(), options: t.options}
+			t.result = append(t.result, tok)
+		}
+	*/
 
 	t.w.Reset()
 
@@ -460,4 +483,8 @@ func (t *Tokenizer) isSQLKeyWord(v string) (TokenType, bool) {
 	}
 
 	return IDENT, false
+}
+
+func composedToken(values ...string) string {
+	return strings.Join(values, " ")
 }

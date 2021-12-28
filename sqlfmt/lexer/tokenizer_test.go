@@ -12,7 +12,8 @@ func TestGetTokens(t *testing.T) {
 
 	options := defaultOptions()
 
-	var testingSQLStatement = `select name, age,'age',sum,z+d^2, sum(case when x = xxx then false else true end), "old"
+	var testingSQLStatement = `select name, age,'age',sum,z+d^2, sum(case when x = xxx then false else true end), "old"::double Precision
+	,"new"::bit varying(30), test::character varying(2)[]
 		from user where name + xxx = 0 and 'age' = 'xxx' limit 100 except 100`
 
 	want := []Token{
@@ -46,6 +47,24 @@ func TestGetTokens(t *testing.T) {
 		{Type: ENDPARENTHESIS, Value: ")"},
 		{Type: COMMA, Value: ","},
 		{Type: STRING, Value: `"old"`},
+		{Type: OPERATOR, Value: "::"},
+		{Type: TYPE, Value: "DOUBLE PRECISION"},
+		{Type: COMMA, Value: ","},
+		{Type: STRING, Value: `"new"`},
+		{Type: OPERATOR, Value: "::"},
+		{Type: TYPE, Value: "BIT VARYING"},
+		{Type: STARTPARENTHESIS, Value: "("},
+		{Type: IDENT, Value: "30"},
+		{Type: ENDPARENTHESIS, Value: ")"},
+		{Type: COMMA, Value: ","},
+		{Type: IDENT, Value: "test"},
+		{Type: OPERATOR, Value: "::"},
+		{Type: TYPE, Value: "CHARACTER VARYING"},
+		{Type: STARTPARENTHESIS, Value: "("},
+		{Type: IDENT, Value: "2"},
+		{Type: ENDPARENTHESIS, Value: ")"},
+		{Type: STARTBRACKET, Value: "["},
+		{Type: ENDBRACKET, Value: "]"},
 
 		{Type: FROM, Value: "FROM"},
 		{Type: IDENT, Value: "user"},
