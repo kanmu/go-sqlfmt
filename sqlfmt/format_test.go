@@ -865,4 +865,12 @@ FROM xxx`,
 LOCK table
 IN xxx`,
 	},
+	{
+		src: `select true from m where t < date_trunc('DAY', to_timestamp('2022-01-01'))`,
+		want: `
+SELECT
+  true
+FROM m
+WHERE t < DATE_TRUNC('DAY', TO_TIMESTAMP('2022-01-01'))`,
+	},
 }
