@@ -81,6 +81,7 @@ const (
 	OVERLAPS
 	NATURAL
 	CROSS
+	TIME
 	ZONE
 	NULLS
 	LAST
@@ -93,6 +94,7 @@ const (
 )
 
 // TokenType is an alias type that represents a kind of token
+//go:generate stringer -type=TokenType
 type TokenType int
 
 // Token is a token struct
